@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <title>회원정보 수정</title>
+    <link rel="stylesheet" th:href="@{/css/header.css}" />
+    <link rel="stylesheet" th:href="@{/css/mypage.css}" />
+    <style>
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+
+      .form-group select {
+        width: 100%;
+        border: 1px solid rgba(148, 163, 184, 0.92);
+        border-radius: 14px;
+        padding: 11px 14px;
+        background: rgba(255, 255, 255, 0.96);
+        color: #0f172a;
+        font: inherit;
+        font-size: 16px;
+        outline: none;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s,
+          background 0.2s;
+        appearance: none;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div th:replace="~{layout/header :: header}"></div>
+
+    <main class="page-container">
+      <form
+        class="register-panel"
+        id="modifyForm"
+        th:action="@{/user/modify}"
+        method="post"
+        enctype="multipart/form-data"
+        novalidate
+      >
+        <section class="form-column">
+          <h2>회원정보 수정</h2>
+          <div class="profile-upload">
+            <label for="profileFile" class="profile-preview">
+              <img
+                id="profilePreview"
+                th:src="${user.profileImg}"
+                alt="프로필 이미지"
+              />
+            </label>
+
+            <label for="profileFile" class="file-trigger">
+              <svg viewBox="0 0 24 24">
+                <path d="M4 7h3l2-2h6l2 2h3v12H4z"></path>
+                <circle cx="12" cy="13" r="3.5"></circle>
+              </svg>
+            </label>
+
+            <input
+              type="file"
+              id="profileFile"
+              name="profileFile"
+              accept="image/*"
+            />
+
+            <p class="profile-guide">프로필 이미지를 클릭해서 변경</p>
+          </div>
+
+          <input type="hidden" name="uid" th:value="${user.uid}" />
+
+          <div class="form-group">
+            <label for="email">이메일</label>
+            <input
+              type="email"
+              id="email"
+              th:value="${user.email}"
+              readonly
+              class="readonly-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="name">이름 <span class="required">*</span></label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              th:value="${user.name}"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="password">새 비밀번호</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="변경할 때만 입력"
+              autocomplete="new-password"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="passwordConfirm">새 비밀번호 확인</label>
+            <input
+              type="password"
+              id="passwordConfirm"
+              placeholder="변경할 때만 입력"
+              autocomplete="new-password"
+            />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="location"
+                >거주 지역 <span class="required">*</span></label
+              >
+              <select id="location" name="location" required>
+                <option value="">지역 선택</option>
+                <option value="서울" th:selected="${user.location == '서울'}">
+                  서울
+                </option>
+                <option value="부산" th:selected="${user.location == '부산'}">
+                  부산
+                </option>
+                <option value="제주" th:selected="${user.location == '제주'}">
+                  제주
+                </option>
+                <option value="인천" th:selected="${user.location == '인천'}">
+                  인천
+                </option>
+                <option value="대구" th:selected="${user.location == '대구'}">
+                  대구
+                </option>
+                <option value="평양" th:selected="${user.location == '평양'}">
+                  평양
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="category"
+                >선호 카테고리 <span class="required">*</span></label
+              >
+              <select id="category" name="category" required>
+                <option value="">카테고리 선택</option>
+                <option value="여행" th:selected="${user.category == '여행'}">
+                  여행
+                </option>
+                <option
+                  value="스터디"
+                  th:selected="${user.category == '스터디'}"
+                >
+                  스터디
+                </option>
+                <option value="취미" th:selected="${user.category == '취미'}">
+                  취미
+                </option>
+                <option
+                  value="스포츠"
+                  th:selected="${user.category == '스포츠'}"
+                >
+                  스포츠
+                </option>
+                <option value="음식" th:selected="${user.category == '음식'}">
+                  음식
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" class="register-btn">수정하기</button>
+          <a th:href="@{/user/mypage}" class="secondary-link">마이페이지</a>
+        </section>
+      </form>
+    </main>
+
+    <script th:src="@{/js/header.js}"></script>
+    <script>
+      document
+        .getElementById("modifyForm")
+        .addEventListener("submit", function (e) {
+          const name = document.getElementById("name");
+          const password = document.getElementById("password").value;
+          const passwordConfirm =
+            document.getElementById("passwordConfirm").value;
+
+          if (!name.value.trim()) {
+            e.preventDefault();
+            alert("이름을 입력해주세요.");
+            name.focus();
+            return;
+          }
+
+          if (password || passwordConfirm) {
+            if (password !== passwordConfirm) {
+              e.preventDefault();
+              alert("비밀번호를 확인해주세요.");
+              document.getElementById("passwordConfirm").focus();
+            }
+          }
+        });
+
+      const profileFile = document.getElementById("profileFile");
+      const profilePreview = document.getElementById("profilePreview");
+
+      profileFile.addEventListener("change", function () {
+        const file = this.files[0];
+
+        if (!file) {
+          return;
+        }
+
+        profilePreview.src = URL.createObjectURL(file);
+      });
+    </script>
+  </body>
+</html>

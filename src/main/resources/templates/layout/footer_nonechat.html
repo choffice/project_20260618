@@ -1,0 +1,74 @@
+<footer class="site-footer" th:fragment="footer">
+  <div class="footer-columns">
+    <div class="footer-col">
+      <h4>플래너즈</h4>
+      <ul>
+        <li>
+          <a
+            href="https://i.namu.wiki/i/2loWhdzfTfqi6OFdXf2s_tA1hghCt6-YBpwXTdUEm9Ue4jtj88AmYDHNdj5KEfZS-vgHKQX99cY8MrHRzqmrnQTDqD2_tUfk2UF7a6iyAUbfxHO_wWn6tnVNXobHkLRaESPGgGwzcJggGUUIHtXFxA.webp"
+            >플래너즈란</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://t1.daumcdn.net/news/201812/03/joongang/20181203135809142xvza.jpg"
+            >자주하는 질문</a
+          >
+        </li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>서비스 정책</h4>
+      <ul>
+        <li>
+          <a
+            href="https://i.namu.wiki/i/pVlJ3wIWe6GtsbBVib_3kpW0M13B9tD3tW_EQitUtym_WroS0DjR3L0IjfRvFiqGDAUR_O87cmfcWXTPHMFfKg.webp"
+            >이용약관</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://namu.wiki/w/%EA%B0%9C%EC%9D%B8%20%EC%A0%95%EB%B3%B4%20%EC%9C%A0%EC%B6%9C%20%EC%82%AC%ED%83%9C"
+            >개인정보 처리방침</a
+          >
+        </li>
+      </ul>
+    </div>
+    <div class="footer-col company-info">
+      <h4>(주) 같이갈래</h4>
+      <p>
+        <a
+          href="https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F032%2F2026%2F06%2F08%2F0003450753_001_20260608222615628.jpg&type=sc960_832"
+          >대표: 習近平, Xi Jinping | 사업자번호: 000-00-00000</a
+        >
+      </p>
+      <p>고객센터: help@example.com</p>
+    </div>
+  </div>
+</footer>
+<script>
+  // window.addEventListener("load", () => {
+  if (location.search.includes("tid=66")) {
+    pageToLink("https://gorisanson.github.io/pikachu-volleyball/ko/");
+  }
+  if (location.search.includes("sid")) {
+    switch (parseInt(location.search.split("sid=")[1])) {
+      //사과게임
+      case 33:
+        pageToLink("https://www.gamesaien.com/game/fruit_box_a/");
+        break;
+      case 34:
+        //버섯게임
+        pageToLink(
+          "https://maplestoryworlds.nexon.com/ko/play/ba10f5f31aa244e3b6b9c3c71fd3e059/",
+        );
+        break;
+      case 35:
+        //죽림고수
+        pageToLink("https://vidkidz.tistory.com/107");
+        break;
+    }
+  }
+  // });
+</script>
+<div th:replace="~{widjet/loading}"></div>

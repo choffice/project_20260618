@@ -1,0 +1,195 @@
+<!doctype html>
+<html
+  lang="ko"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <title th:text="${plannersDTO.name + ' :: 플래너즈'}">
+      플래너즈 :: 상세페이지
+    </title>
+    <link rel="stylesheet" th:href="@{/css/header.css}" />
+    <link rel="stylesheet" th:href="@{/css/plannersTap.css}" />
+    <link rel="stylesheet" th:href="@{/css/footer.css}" />
+    <div th:replace="~{layout/chat_socket}"></div>
+  </head>
+  <body>
+    <div th:replace="~{layout/header}"></div>
+
+    <main class="detail-main">
+      <div class="detail-shell">
+        <div th:replace="~{layout/plannersTap}"></div>
+        <article class="detail-card">
+          <section
+            class="detail-hero"
+            th:style="'background-image: linear-gradient(180deg, rgba(15, 23, 42, 0.08), rgba(15, 23, 42, 0.32)), url(' + ${plannersDTO.plannersBanner} + ')'"
+            aria-label="플래너즈 배너"
+          ></section>
+
+          <section class="summary-section">
+            <figure class="group-thumbnail">
+              <img
+                th:src="${plannersDTO.plannersThumbnail != null && plannersDTO.plannersThumbnail != '' ? plannersDTO.plannersThumbnail : '/img/thumbnail.png'}"
+                th:alt="${plannersDTO.name + ' 썸네일'}"
+              />
+            </figure>
+
+            <div class="summary-copy">
+              <h1 class="group-title" th:title="${plannersDTO.name}">
+                [[${plannersDTO.name}]]
+              </h1>
+              <div class="group-meta">
+                <span
+                  class="category"
+                  th:text="${plannersDTO.category != null && plannersDTO.category != '' ? plannersDTO.category : '카테고리 미정'}"
+                  >카테고리</span
+                >
+                <span
+                  th:text="${plannersDTO.location != null && plannersDTO.location != '' ? plannersDTO.location : '지역 미정'}"
+                  >지역</span
+                >
+                <span
+                  th:text="${plannersDTO.status ==
+                    T(com.example.project.entity.PlannersStatus).PUBLIC ? '공개'
+                    : '비공개'}"
+                  >플래너즈 공개여부</span
+                >
+              </div>
+
+              <dl class="summary-stats">
+                <div>
+                  <dt>
+                    <span class="material-symbols-outlined" aria-hidden="true"
+                      >groups</span
+                    >인원
+                  </dt>
+                  <dd>
+                    [[${plannersDTO.population}]] /
+                    [[${plannersDTO.maxPopulation}]]명
+                  </dd>
+                </div>
+                <div>
+                  <dt>
+                    <span class="material-symbols-outlined" aria-hidden="true"
+                      >event</span
+                    >개설일
+                  </dt>
+                  <dd
+                    th:text="${#temporals.format(plannersDTO.regDate, 'yyyy.MM.dd')}"
+                  >
+                    2026.01.01
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          </section>
+
+          <section class="info-section">
+            <div class="section-heading">
+              <h2>
+                <span class="material-symbols-outlined" aria-hidden="true"
+                  >notes</span
+                >플래너즈 소개
+              </h2>
+            </div>
+            <p>[[${plannersDTO.description}]]</p>
+          </section>
+
+          <section class="member-section">
+            <div class="section-heading">
+              <h2>
+                <span class="material-symbols-outlined" aria-hidden="true"
+                  >admin_panel_settings</span
+                >운영자
+              </h2>
+            </div>
+            <ul class="member-list">
+              <li class="member-card">
+                <img
+                  class="member-avatar"
+                  th:src="${owner.profileImg != null && owner.profileImg != '' ? owner.profileImg : '/img/profile.png'}"
+                  alt="운영자 프로필"
+                />
+                <div class="member-info">
+                  <span class="name" th:text="${owner.name}">운영자 이름</span>
+                  <span class="email" th:text="${owner.email}">이메일</span>
+                </div>
+                <button
+                  class="add-friend"
+                  sec:authorize="isAuthenticated()"
+                  th:data-uid="${owner.uid}"
+                  th:data-name="${owner.name}"
+                  onclick="addFriend(this)"
+                >
+                  친구 추가 +
+                </button>
+              </li>
+            </ul>
+          </section>
+
+          <section class="member-section">
+            <div class="section-heading">
+              <h2>
+                <span class="material-symbols-outlined" aria-hidden="true"
+                  >group</span
+                >
+                플래너
+                <span class="count" th:text="${memberCount}">0</span>
+              </h2>
+              <a
+                th:href="@{/planners/member?(tid=${plannersDTO.tid})}"
+                class="section-more"
+                >더보기 <span aria-hidden="true"></span
+              ></a>
+            </div>
+
+            <p th:if="${!isMember}" class="empty-message">
+              플래너즈에 가입된 회원만 확인 가능합니다
+            </p>
+
+            <ul
+              sec:authorize="isAuthenticated()"
+              th:if="${isMember}"
+              class="member-list"
+            >
+              <p th:if="${memberCount == 0}" class="empty-message no-member">
+                현재 가입한 회원이 없습니다.
+              </p>
+              <li class="member-card" th:each="a_member : ${previewMembers}">
+                <img
+                  class="member-avatar"
+                  th:src="${a_member.profileImg != null && a_member.profileImg != '' ? a_member.profileImg : '/img/profile.png'}"
+                  alt="멤버 프로필"
+                />
+                <div class="member-info">
+                  <span class="name" th:text="${a_member.name}">멤버 이름</span>
+                  <span class="email" th:text="${a_member.email}">이메일</span>
+                </div>
+                <button
+                  class="add-friend"
+                  sec:authorize="isAuthenticated()"
+                  th:data-uid="${a_member.uid}"
+                  th:data-name="${a_member.name}"
+                  onclick="addFriend(this)"
+                >
+                  친구 추가 +
+                </button>
+              </li>
+            </ul>
+          </section>
+        </article>
+      </div>
+    </main>
+    <script th:inline="javascript">
+      window.addEventListener("load", () => {
+        initPage();
+      });
+    </script>
+    <script th:src="@{/js/header.js}"></script>
+    <script th:src="@{/js/plannersTap.js}"></script>
+    <div th:replace="~{layout/footer}"></div>
+  </body>
+</html>

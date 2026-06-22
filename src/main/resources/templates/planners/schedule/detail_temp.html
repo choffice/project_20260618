@@ -1,0 +1,583 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>플래너즈 :: 일정 보기</title>
+  <!-- <link rel="icon" href="/favicon.ico" />-->
+  <div th:replace="~{layout/chat_socket}"></div>
+  <link rel="stylesheet" th:href="@{/css/header.css}" />
+  <link rel="stylesheet" th:href="@{/css/plannersTap.css}" />
+  <link rel="stylesheet" th:href="@{/css/footer.css}" />
+  <meta name="_csrf" th:content="${_csrf.token}" />
+  <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+  <style>
+    .page {
+      display: flex;
+      gap: 16px;
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    .board-area,
+    .chat-area {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+    }
+
+    .board-area {
+      flex: 7;
+      padding: 16px;
+      overflow: auto;
+      position: relative;
+    }
+
+    .chat-area {
+      flex: 3;
+      min-width: 320px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .board-title,
+    .chat-title {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .user-chip {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #3730a3;
+      font-size: 13px;
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    .logout-button {
+      height: 32px;
+      padding: 0 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      background: #fff;
+      color: #374151;
+      cursor: pointer;
+    }
+
+    .logout-button:hover {
+      background: #f3f4f6;
+    }
+
+    .board-columns {
+      display: flex;
+      gap: 16px;
+      min-height: calc(100vh - 88px);
+    }
+
+    .column {
+      flex: 1;
+      min-width: 180px;
+      min-height: 220px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f8f9fc;
+    }
+
+    .column h3 {
+      margin: 0 0 12px;
+      font-size: 16px;
+    }
+
+    .task {
+      margin-bottom: 10px;
+      padding: 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      cursor: grab;
+      user-select: none;
+    }
+
+    .task.dragging {
+      opacity: 0.5;
+    }
+
+    .task.in-slot {
+      margin-bottom: 0;
+    }
+
+    .task small {
+      display: block;
+      margin-top: 4px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .time-slot-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .time-slot {
+      padding: 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: #fff;
+      min-height: 64px;
+    }
+
+    .time-slot-label {
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #374151;
+    }
+
+    .time-slot-body {
+      min-height: 36px;
+    }
+
+    .activity-block-list .task {
+      margin-top: 10px;
+    }
+
+    .chat-messages {
+      flex: 1;
+      min-height: 240px;
+      margin-bottom: 12px;
+      padding: 12px;
+      overflow-y: auto;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #fafafa;
+    }
+
+    .msg {
+      margin-bottom: 8px;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+
+    .sender {
+      font-weight: 700;
+      color: #1f2937;
+    }
+
+    .chat-input {
+      display: flex;
+      gap: 8px;
+    }
+
+    .chat-input input {
+      flex: 1;
+      min-width: 0;
+      height: 42px;
+      padding: 0 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      outline: none;
+    }
+
+    .chat-input input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+    }
+
+    .chat-input button {
+      width: 72px;
+      height: 42px;
+      border: none;
+      border-radius: 6px;
+      background: #2563eb;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .chat-input button:hover {
+      background: #1d4ed8;
+    }
+
+    #cursorLayer,
+    #ghostLayer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    #cursorLayer {
+      z-index: 10001;
+    }
+
+    .remote-cursor {
+      position: fixed;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #ef4444;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+    }
+
+    .remote-cursor-label {
+      position: absolute;
+      top: -20px;
+      left: 10px;
+      white-space: nowrap;
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.75);
+      color: #fff;
+    }
+
+    .drag-state {
+      position: fixed;
+      bottom: 16px;
+      left: 16px;
+      z-index: 10000;
+      display: none;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: rgba(17, 24, 39, 0.9);
+      color: #fff;
+      font-size: 13px;
+    }
+
+    @media (max-width: 840px) {
+      .page {
+        flex-direction: column;
+      }
+
+      .chat-area {
+        min-width: 0;
+      }
+
+      .board-columns {
+        min-height: 360px;
+        overflow-x: auto;
+      }
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 14px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    .btn-cancel {
+      padding: 8px 16px;
+      background: #f3f4f6;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .btn-submit {
+      padding: 8px 16px;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .time-gutter {
+      width: 60px;
+      border-right: 1px solid #e5e7eb;
+      position: relative;
+      background: #f9fafb;
+    }
+
+    .time-slot-label {
+      position: absolute;
+      width: 100%;
+      text-align: right;
+      padding-right: 8px;
+      font-size: 12px;
+      color: #6b7280;
+      transform: translateY(-50%);
+    }
+
+    .time-board {
+      flex: 1;
+      position: relative;
+      background: repeating-linear-gradient(to bottom, transparent, transparent 59px, #e5e7eb 59px, #e5e7eb 60px);
+    }
+
+    .placed-block {
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 13px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      border-left: 4px solid rgba(0, 0, 0, 0.2);
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+    }
+
+    .placed-block-title {
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .placed-block-time {
+      font-size: 11px;
+      opacity: 0.8;
+    }
+
+    .submit-btn {
+      background-color: #007bff;
+      /* 파란색 */
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .submit-btn:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+
+<body>
+  <div th:replace="~{layout/header}"></div>
+  <th:block>
+    <main class="detail-main">
+      <div class="detail-shell">
+        <div th:replace="~{layout/plannersTap}"></div>
+        <article class="detail-card">
+
+          <div class="page">
+            <div class="board-area">
+              <div class="section-header">
+                <h2 class="board-title" th:text="|${schedule.title}의 일정|"></h2>
+              </div>
+
+              <div class="board-columns">
+                <div class="left-container"
+                  style="flex: 1; display: flex; flex-direction: column; gap: 16px; max-height: calc(100vh - 120px);">
+                  <div class="column activity-block-list" data-zone="activity"
+                    style="flex: 2; overflow-y: auto; min-height: 0; margin-bottom: 0;">
+                    <h3>참가 인원 목록</h3>
+                  </div>
+
+                </div>
+                <div class="column time-table" data-zone="schedule">
+                  <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <button id="prevDateBtn" onclick="changeDate(-1)">◀</button>
+                    <span id="currentDateDisplay"></span>
+                    <button id="nextDateBtn" onclick="changeDate(1)">▶</button>
+                  </div>
+                  <div class="time-container" style="display:flex;">
+                    <div class="time-gutter" id="timeGutter"></div>
+                    <div class="time-board" id="timeBoard"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+      </div>
+      </div>
+      </div>
+      </article>
+      </div>
+      <!-- <div id="blockDTO" th:data-blocks="${blocks}"></div> -->
+    </main>
+    <script></script>
+  </th:block>
+  <script th:inline="javascript">
+    const blocks = /*[[${blocks}]]*/[];
+    let dateList = [];
+    let currentDateIndex = 0;
+
+    window.addEventListener('load', () => {
+      initDates();
+      initTimeTable();
+    });
+    function initTimeTable() {
+      const gutter = document.getElementById('timeGutter');
+      const board = document.getElementById('timeBoard');
+
+      let html = '';
+
+      for (let i = 0; i <= 24; i++) {
+        html += `
+      <div
+        class="time-slot-label"
+        style="top:${i * 60 * PIXELS_PER_MINUTE}px">
+        ${String(i % 24).padStart(2, '0')}:00
+      </div>
+    `;
+      }
+
+      gutter.innerHTML = html;
+board.style.height =
+    `${1440 * PIXELS_PER_MINUTE}px`;
+
+gutter.style.height =
+    `${1440 * PIXELS_PER_MINUTE}px`;
+
+      renderBlocks();
+    }
+
+    function initDates() {
+      const startDateStr =
+      /*[[${schedule.startDate != null ? schedule.startDate.toString() : ''}]]*/ '';
+
+      const endDateStr =
+      /*[[${schedule.endDate != null ? schedule.endDate.toString() : ''}]]*/ '';
+
+      let start = new Date(startDateStr);
+      let end = new Date(endDateStr);
+
+      if (isNaN(start.getTime())) start = new Date();
+      if (isNaN(end.getTime())) end = new Date();
+
+      dateList = [];
+
+      let current = new Date(
+        start.getFullYear(),
+        start.getMonth(),
+        start.getDate()
+      );
+
+      const last = new Date(
+        end.getFullYear(),
+        end.getMonth(),
+        end.getDate()
+      );
+
+      while (current <= last) {
+        const y = current.getFullYear();
+        const m = String(current.getMonth() + 1).padStart(2, '0');
+        const d = String(current.getDate()).padStart(2, '0');
+
+        dateList.push(`${y}-${m}-${d}`);
+
+        current.setDate(current.getDate() + 1);
+      }
+
+      currentDateIndex = 0;
+      updateDateUI();
+    }
+
+    function updateDateUI() {
+      document.getElementById("currentDateDisplay").textContent =
+        dateList[currentDateIndex];
+
+      document.getElementById("prevDateBtn").style.visibility =
+        currentDateIndex > 0 ? "visible" : "hidden";
+
+      document.getElementById("nextDateBtn").style.visibility =
+        currentDateIndex < dateList.length - 1
+          ? "visible"
+          : "hidden";
+    }
+
+    const PIXELS_PER_MINUTE = .8;
+
+    function timeToPixels(time) {
+  const [h, m] = time.split(':').map(Number);
+  return (h * 60 + m) * PIXELS_PER_MINUTE;
+}
+    }
+
+    function changeDate(delta) {
+      const next = currentDateIndex + delta;
+
+      if (next < 0 || next >= dateList.length) {
+        return;
+      }
+
+      currentDateIndex = next;
+      updateDateUI();
+      renderBlocks();
+    }
+
+    function renderBlocks() {
+      const board = document.getElementById('timeBoard');
+
+      board.querySelectorAll('.placed-block')
+        .forEach(e => e.remove());
+
+      const currentDate = dateList[currentDateIndex];
+
+      const todayBlocks =
+        blocks.filter(b => b.dateStr === currentDate);
+
+      todayBlocks.forEach(block => {
+        const startPx =
+          timeToPixels(block.startTimeStr);
+
+        let endPx =
+          timeToPixels(block.endTimeStr);
+
+        if (endPx <= startPx) {
+          endPx += 1440;
+        }
+
+        const div =
+          document.createElement('div');
+
+        div.className = 'placed-block';
+
+        div.style.top =
+          `${startPx}px`;
+
+        div.style.height =
+          `${endPx - startPx}px`;
+
+        div.innerHTML = `
+      <div class="placed-block-title">
+        ${block.name ?? ''}
+      </div>
+      <div class="placed-block-time">
+       ${block.startTimeStr}
+~
+${block.endTimeStr}
+      </div>
+    `;
+
+        board.appendChild(div);
+      });
+    }
+  </script>
+  <script th:src="@{/js/header.js}"></script>
+  <script th:src="@{/js/plannersTap.js}"></script>
+  <div th:replace="~{layout/footer}"></div>
+</body>
+
+</html>

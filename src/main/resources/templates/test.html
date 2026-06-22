@@ -1,0 +1,52 @@
+<!doctype html>
+<html
+  lang="ko"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Let's Plan</title>
+    <link rel="stylesheet" th:href="@{/css/header.css}" />
+    <link rel="stylesheet" th:href="@{/css/footer.css}" />
+  </head>
+  <body>
+    <div th:replace="~{layout/header :: header}"></div>
+
+    <input type="text" name="test" id="test" />
+    <button id="alert">alert</button>
+    <button id="image">까꿍</button>
+    <img id="jumpscare" style="display: none; width: 1500px; height: 900px" />
+
+    <script th:src="@{/js/header.js}"></script>
+    <div th:replace="~{layout/footer}"></div>
+    <script th:inline="javascript">
+      const input = document.querySelector("#test");
+      const button = document.querySelector("#alert");
+      const imageBtn = document.querySelector("#image");
+      const image = document.querySelector("#jumpscare");
+
+      input.onkeyup = (e) => {
+        e.preventDefault();
+        if (e.key === "Enter") {
+          alert(input.value);
+        }
+      };
+
+      button.onclick = (e) => {
+        e.preventDefault();
+        alert(input.value);
+      };
+
+      imageBtn.onclick = (e) => {
+        e.preventDefault();
+        if (image.style.display === "none") {
+          image.setAttribute("src", "/img/download.jpg");
+          image.style.display = "block";
+        } else {
+          image.style.display = "none";
+        }
+      };
+    </script>
+  </body>
+</html>

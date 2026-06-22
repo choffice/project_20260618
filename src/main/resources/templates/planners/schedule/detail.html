@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>플래너즈 :: 일정 보기</title>
+  <!-- <link rel="icon" href="/favicon.ico" />-->
+  <div th:replace="~{layout/chat_socket}"></div>
+  <link rel="stylesheet" th:href="@{/css/header.css}" />
+  <link rel="stylesheet" th:href="@{/css/plannersTap.css}" />
+  <link rel="stylesheet" th:href="@{/css/footer.css}" />
+  <meta name="_csrf" th:content="${_csrf.token}" />
+  <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+  <style>
+    .page {
+      display: flex;
+      gap: 16px;
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    .board-area {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+    }
+
+    .board-area {
+      flex: 7;
+      padding: 16px;
+      overflow: auto;
+      position: relative;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .board-title {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .user-chip {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #3730a3;
+      font-size: 13px;
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    .logout-button {
+      height: 32px;
+      padding: 0 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      background: #fff;
+      color: #374151;
+      cursor: pointer;
+    }
+
+    .logout-button:hover {
+      background: #f3f4f6;
+    }
+
+    .board-columns {
+      display: flex;
+      gap: 16px;
+      min-height: calc(100vh - 88px);
+    }
+
+    .column {
+      flex: 1;
+      min-width: 180px;
+      min-height: 220px;
+      padding: 12px;
+      border-radius: 8px;
+    }
+
+    .column h3 {
+      margin: 0 0 12px;
+      font-size: 16px;
+    }
+
+    .time-table {
+      background: #f8f9fc;
+    }
+
+    .time-slot-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .time-slot {
+      padding: 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: #fff;
+      min-height: 64px;
+    }
+
+    .time-slot-label {
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #374151;
+    }
+
+    .time-slot-body {
+      min-height: 36px;
+    }
+
+    .activity-block-list .task {
+      margin-top: 10px;
+    }
+
+    @media (max-width: 840px) {
+      .page {
+        flex-direction: column;
+      }
+
+      .board-columns {
+        min-height: 360px;
+        overflow-x: auto;
+      }
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 14px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    .btn-cancel {
+      padding: 8px 16px;
+      background: #f3f4f6;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .btn-submit {
+      padding: 8px 16px;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .time-gutter {
+      width: 60px;
+      border-right: 1px solid #e5e7eb;
+      position: relative;
+      background: #f9fafb;
+    }
+
+    .time-slot-label {
+      position: absolute;
+      width: 100%;
+      text-align: right;
+      padding-right: 8px;
+      font-size: 12px;
+      color: #6b7280;
+      transform: translateY(-50%);
+    }
+
+    .time-board {
+      flex: 1;
+      position: relative;
+      background: repeating-linear-gradient(to bottom, transparent, transparent 59px, #e5e7eb 59px, #e5e7eb 60px);
+    }
+
+    .placed-block {
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 13px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      border-left: 4px solid rgba(0, 0, 0, 0.2);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .placed-block-title {
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .placed-block-time {
+      font-size: 11px;
+      opacity: 0.8;
+    }
+
+    .submit-btn {
+      background-color: #007bff;
+      /* 파란색 */
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .submit-btn:hover {
+      background-color: #0056b3;
+    }
+
+    .schedule-thumb {
+      position: relative;
+      width: 28%;
+      min-width: 253px;
+      height: 160px;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #e5e7eb;
+      flex-shrink: 0;
+    }
+
+    .schedule-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .schedule-description {
+      min-height: 200px;
+      min-width: 100px;
+      margin: 10px 10px;
+      font-size: 18px;
+      padding: 10px 10px;
+      overflow: auto;
+    }
+
+    .schedule-participants {
+      min-height: 300px;
+      min-width: 100px;
+      margin: 10px 10px;
+      background: #f8f9fc;
+      padding: 10px 10px;
+      border-radius: 5px;
+    }
+
+    .join-btn {
+      background-color: #007bff;
+      /* 파란색 */
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .join-btn:hover {
+      background-color: #0056b3;
+      /* hover 시 더 선명 */
+    }
+  </style>
+</head>
+
+<body>
+  <div th:replace="~{layout/header}"></div>
+  <th:block>
+    <main class="detail-main">
+      <div class="detail-shell">
+        <div th:replace="~{layout/plannersTap}"></div>
+        <article class="detail-card">
+
+          <div class="page">
+            <div class="board-area">
+              <div class="section-header">
+                <h2 class="board-title" th:text="|${schedule.title}의 일정|"></h2>
+              </div>
+
+              <div class="board-columns">
+                <div class="left-container"
+                  style="flex: 1; display: flex; flex-direction: column; gap: 16px; max-height: calc(100vh - 120px);">
+                  <div class="column activity-block-list" data-zone="activity"
+                    style="flex: 2; overflow-y: auto; min-height: 0; margin-bottom: 0;">
+                    <div class="schedule-thumb">
+                      <img th:src="${schedule.scheduleThumbnail==' '||schedule.scheduleThumbnail=='/img/thumbnail.png'?'/img/엄준식.jpg':schedule.scheduleThumbnail}">
+                    </div>
+                    <div class="schedule-description" th:text="${schedule.description}">
+                    </div>
+                    <h2 style="text-align: center;">참가하는 인원들</h2>
+                    <div class="schedule-participants"></div>
+                    <button class="join-btn" th:text="참가하기"></button>
+                  </div>
+
+                </div>
+
+                <div class="column time-table" data-zone="schedule"
+                  style="flex: 2.5; overflow-y: auto; max-height: calc(100vh - 120px);">
+                  <div
+                    style="display: flex; justify-content: space-between; align-items: center; background: #fff; position: sticky; top: 0; z-index: 10; padding: 4px 0;">
+                    <h3 style="margin: 0;">시간표</h3>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <button id="prevDateBtn" onclick="changeDate(-1)"
+                        style="border:none; background:none; cursor:pointer; font-size:16px;">◀</button>
+                      <span id="currentDateDisplay"
+                        style="font-weight:bold; font-size: 14px; min-width: 90px; text-align: center;"></span>
+                      <button id="nextDateBtn" onclick="changeDate(1)"
+                        style="border:none; background:none; cursor:pointer; font-size:16px;">▶</button>
+                    </div>
+                  </div>
+                  <div class="time-container" style="display: flex; margin-top: 12px; position: relative;">
+                    <div class="time-gutter" id="timeGutter"></div>
+                    <div class="time-board" id="timeBoard"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+      </div>
+      </div>
+      </div>
+      </article>
+      </div>
+      <div id="blockDTO" th:data-blocks="${blocks}"></div>
+    </main>
+    <script></script>
+  </th:block>
+  <script th:inline="javascript">
+    let dateList = [];
+    let currentDateIndex = 0;
+
+    const blockColors = [
+      '#fecaca', '#fde68a', '#d9f99d', '#bbf7d0', '#a7f3d0',
+      '#99f6e4', '#bae6fd', '#bfdbfe', '#c7d2fe', '#ddd6fe',
+      '#fbcfe8', '#fecdd3'
+    ];
+
+    const isMember = /*[[${isMember}]]*/'isMember';
+    const sid = /*[[${sid}]]*/ 'sid';
+    const tid = /*[[${tid}]]*/'tid';
+    const blocks = /*[[${blocks}]]*/'blocks';
+
+    window.addEventListener("load", () => {
+      if (isMember === false) {
+        alert("잘못된 접근입니다.");
+        window.history.back();
+        return;
+      }
+      document.body.style.display = "block";
+      initPage();
+      initDates();
+      initTimeTable();
+    });
+
+    function initDates() {
+      const startDateStr = /*[[${schedule != null && schedule.startDate != null ? schedule.startDate.toString() : ''}]]*/ "2026-06-17T09:00:00";
+      const endDateStr = /*[[${schedule != null && schedule.endDate != null ? schedule.endDate.toString() : ''}]]*/ "2026-06-18T18:00:00";
+
+      let start = new Date(startDateStr);
+      let end = new Date(endDateStr);
+
+      if (isNaN(start.getTime())) start = new Date();
+      if (isNaN(end.getTime())) end = new Date();
+      if (end < start) end = start;
+
+      timelineStartHour = 0;
+
+      let current = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+      const last = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+
+      while (current <= last) {
+        const y = current.getFullYear();
+        const m = String(current.getMonth() + 1).padStart(2, '0');
+        const d = String(current.getDate()).padStart(2, '0');
+        dateList.push(`${y}-${m}-${d}`);
+        current.setDate(current.getDate() + 1);
+      }
+
+      if (dateList.length === 0) {
+        const today = new Date();
+        dateList.push(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`);
+      }
+
+      updateDateUI();
+    }
+
+    function getColorForTask(taskId) {
+      if(!taskId) return blockColors[0];
+      let hash = 0;
+      const str = String(taskId);
+      for(let i=0; i<str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      return blockColors[Math.abs(hash) % blockColors.length];
+    }
+
+    function updateDateUI() {
+      document.getElementById("currentDateDisplay").textContent = dateList[currentDateIndex];
+      document.getElementById("prevDateBtn").style.visibility = currentDateIndex > 0 ? "visible" : "hidden";
+      document.getElementById("nextDateBtn").style.visibility = currentDateIndex < dateList.length - 1 ? "visible" : "hidden";
+    }
+
+    function changeDate(delta) {
+      const newIndex = currentDateIndex + delta;
+      if (newIndex >= 0 && newIndex < dateList.length) {
+        currentDateIndex = newIndex;
+        updateDateUI();
+        refreshBlocksVisibility();
+      }
+    }
+
+    function refreshBlocksVisibility() {
+      const currentDate = dateList[currentDateIndex];
+      const previousDate = currentDateIndex > 0 ? dateList[currentDateIndex - 1] : null;
+
+      document.querySelectorAll(".placed-block").forEach(block => {
+        const startStr = block.dataset.start;
+        const endStr = block.dataset.end;
+
+        if (block.dataset.scheduleDate === currentDate) {
+          const startPx = timeToPixels(startStr);
+          const endPx = timeToPixels(endStr);
+          const isNextDaySpan = endPx <= startPx;
+
+          const topPx = startPx;
+          const heightPx = isNextDaySpan ? (24 * 60 - startPx) : (endPx - startPx);
+
+          block.style.top = topPx + "px";
+          block.style.height = heightPx + "px";
+          block.style.display = "flex";
+          block.querySelector(".placed-block-time").textContent = `${startStr} ~ ${endStr}`;
+
+        } else if (previousDate && block.dataset.scheduleDate === previousDate) {
+          const startPx = timeToPixels(startStr);
+          const endPx = timeToPixels(endStr);
+          if (endPx <= startPx) {
+            const topPx = 0;
+            const heightPx = endPx;
+
+            block.style.top = topPx + "px";
+            block.style.height = heightPx + "px";
+            block.style.display = "flex";
+            block.querySelector(".placed-block-time").textContent = `${startStr} ~ ${endStr} (전일)`;
+          } else {
+            block.style.display = "none";
+          }
+        } else {
+          block.style.display = "none";
+        }
+      });
+    }
+
+    function initTimeTable() {
+      const gutter = document.getElementById("timeGutter");
+      if (!gutter) return;
+
+      let str = "";
+      for (let i = 0; i <= 24; i++) {
+        let displayHour = i >= 24 ? 0 : i;
+        let suffix = i >= 24 ? " (익일)" : "";
+        str += `<div class="time-slot-label" style="top: ${i * 60}px">${String(displayHour).padStart(2, '0')}:00${suffix}</div>`;
+      }
+      gutter.innerHTML = str;
+      gutter.style.height = (24 * 60) + "px";
+
+      const board = document.getElementById("timeBoard");
+      board.style.height = (24 * 60) + "px";
+
+      for (const block of blocks) {
+        board.innerHTML += `<div class="placed-block" data-task-id="${block.bid}" data-start="${block.startTimeStr}" data-end="${block.endTimeStr}" data-schedule-date="${block.dateStr}" style="background-color: ${getColorForTask(block.bid)}; dispay: flex;">
+                              <div class="placed-block-title">${block.name}</div>
+                              <div class="placed-block-time">${block.startTimeStr} ~ ${block.endTimeStr}</div>
+                            </div>`;
+      }
+
+      refreshBlocksVisibility();
+    }
+
+    function timeToPixels(timeStr) {
+      if (!timeStr) return 0;
+      const parts = timeStr.split(":");
+      const h = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      return (h * 60) + m;
+    }
+  </script>
+  <script th:src="@{/js/header.js}"></script>
+  <script th:src="@{/js/plannersTap.js}"></script>
+  <div th:replace="~{layout/footer}"></div>
+</body>
+
+</html>

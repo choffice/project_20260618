@@ -1,0 +1,206 @@
+<header th:fragment="header">
+  <div class="header-wrap">
+    <div class="header-left">
+      <button
+        type="button"
+        class="icon-btn"
+        id="menuBtn"
+        aria-label="메뉴 열기"
+      >
+        ☰
+      </button>
+
+      <div class="menu-panel" id="menuPanel" sec:authorize="!isAuthenticated()">
+        <a th:href="@{/user/register}">회원가입</a>
+        <a th:href="@{/user/login}">로그인</a>
+        <a th:href="@{/planners/list}">플래너즈 찾아보기</a>
+      </div>
+
+      <div class="menu-panel" id="menuPanel2" sec:authorize="isAuthenticated()">
+        <p
+          class="menu-user-name"
+          th:text="${#authentication.principal.name + ' 님'}"
+        ></p>
+        <a th:href="@{/user/mypage}">마이페이지</a>
+        <form class="menu-form" th:action="@{/logout}" method="post">
+          <input
+            type="hidden"
+            th:name="${_csrf.parameterName}"
+            th:value="${_csrf.token}"
+          />
+          <button class="menu-link-button" type="submit">로그아웃</button>
+        </form>
+        <a th:href="@{/planners/list}">플래너즈 찾아보기</a>
+      </div>
+    </div>
+
+    <div class="header-center">
+      <a th:href="@{/}" class="logo">Let's Plan</a>
+    </div>
+
+    <div class="header-right">
+      <a
+        th:href="@{/planners/create}"
+        class="create-btn"
+        sec:authorize="isAuthenticated()"
+        >＋ 플래너즈 생성</a
+      >
+
+      <button
+        type="button"
+        class="icon-btn bell-btn"
+        id="notifBtn"
+        aria-label="알림 열기"
+        sec:authorize="isAuthenticated()"
+      >
+        <img th:src="@{/img/notif.png}" alt="알림" />
+
+        <span
+          class="notification-badge"
+          th:if="${notificationsCount > 0}"
+          th:text="${notificationsCount > 99 ? '99+' : notificationsCount}"
+        >
+        </span>
+      </button>
+
+      <div
+        class="notif-panel"
+        id="notifPanel"
+        sec:authorize="isAuthenticated()"
+      >
+        <div class="notif-tabs">
+          <button
+            class="tab active"
+            type="button"
+            data-target="activityContent"
+          >
+            활동 알림
+          </button>
+          <button class="tab" type="button" data-target="scheduleContent">
+            일정 알림
+          </button>
+          <button class="tab" type="button" data-target="groupContent">
+            그룹 알림
+          </button>
+        </div>
+
+        <div
+          class="notif-content active"
+          id="activityContent"
+          th:with="activityNotifications=${notifications.?[type == T(com.example.project.entity.NotificationType).ACTIVITY and !isRead]}"
+        >
+          <div
+            class="notif-list"
+            th:if="${!#lists.isEmpty(activityNotifications)}"
+          >
+            <div
+              class="notif-item"
+              th:each="notification : ${activityNotifications}"
+              th:data-nid="${notification.nid}"
+              th:data-url="${notification.url != null ? notification.url : ''}"
+              onclick="
+                handleNotificationClick(
+                  this.getAttribute('data-nid'),
+                  this.getAttribute('data-url'),
+                )
+              "
+              style="cursor: pointer"
+            >
+              <div class="dot activity"></div>
+              <div class="content">
+                <div class="title" th:text="${notification.title}"></div>
+              </div>
+            </div>
+          </div>
+          <div
+            class="notif-empty"
+            th:if="${#lists.isEmpty(activityNotifications)}"
+          >
+            <div class="notif-item empty">활동 알림이 없습니다.</div>
+          </div>
+        </div>
+
+        <div
+          class="notif-content"
+          id="scheduleContent"
+          th:with="scheduleNotifications=${notifications.?[type == T(com.example.project.entity.NotificationType).SCHEDULE and !isRead]}"
+        >
+          <div
+            class="notif-list"
+            th:if="${!#lists.isEmpty(scheduleNotifications)}"
+          >
+            <div
+              class="notif-item"
+              th:each="notification : ${scheduleNotifications}"
+              th:data-nid="${notification.nid}"
+              th:data-url="${notification.url != null ? notification.url : ''}"
+              onclick="
+                handleNotificationClick(
+                  this.getAttribute('data-nid'),
+                  this.getAttribute('data-url'),
+                )
+              "
+              style="cursor: pointer"
+            >
+              <div class="dot schedule"></div>
+              <div class="content">
+                <div class="title" th:text="${notification.title}"></div>
+              </div>
+            </div>
+          </div>
+          <div
+            class="notif-empty"
+            th:if="${#lists.isEmpty(scheduleNotifications)}"
+          >
+            <div class="notif-item empty">일정 알림이 없습니다.</div>
+          </div>
+        </div>
+
+        <div
+          class="notif-content"
+          id="groupContent"
+          th:with="groupNotifications=${notifications.?[type == T(com.example.project.entity.NotificationType).GROUP and !isRead]}"
+        >
+          <div
+            class="notif-list"
+            th:if="${!#lists.isEmpty(groupNotifications)}"
+          >
+            <div
+              class="notif-item"
+              th:each="notification : ${groupNotifications}"
+              th:data-nid="${notification.nid}"
+              th:data-url="${notification.url != null ? notification.url : ''}"
+              onclick="
+                handleNotificationClick(
+                  this.getAttribute('data-nid'),
+                  this.getAttribute('data-url'),
+                )
+              "
+              style="cursor: pointer"
+            >
+              <div class="dot group"></div>
+              <div class="content">
+                <div class="title" th:text="${notification.title}"></div>
+              </div>
+            </div>
+          </div>
+          <div
+            class="notif-empty"
+            th:if="${#lists.isEmpty(groupNotifications)}"
+          >
+            <div class="notif-item empty">그룹 알림이 없습니다.</div>
+          </div>
+        </div>
+
+        <a th:href="@{/user/mypage#activity-section}" class="notif-more"
+          >지난 알림 보기</a
+        >
+      </div>
+    </div>
+  </div>
+</header>
+<script>
+  function pageToLink(url) {
+    location.href = url;
+  }
+</script>

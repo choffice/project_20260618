@@ -1,0 +1,3022 @@
+<!--  <link rel="stylesheet"-->
+<!--        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"/>-->
+<!--  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>-->
+<!--  <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>-->
+<style>
+  .notification_a {
+    position: fixed;
+    bottom: -120px; /* 처음엔 화면 밖 */
+    right: 20px;
+    width: 320px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    font-family: sans-serif;
+    transition: bottom 0.5s ease;
+    z-index: 5000;
+  }
+
+  .notification_a.show {
+    bottom: 20px; /* 스르륵 올라옴 */
+  }
+
+  .notification_a .profile img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 10px;
+  }
+
+  .notification_a .content strong {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+
+  .notification_a .content p {
+    margin: 0;
+    font-size: 13px;
+    color: #555;
+  }
+
+  #notification_a button {
+    float: right;
+    border-radius: 8px;
+    border: none;
+    padding: 5px 20px;
+    margin-top: 10px;
+    margin-left: 10px;
+  }
+
+  .gpu-error {
+    width: 100vw;
+    height: 100vh;
+    z-index: 5000;
+    position: fixed;
+    top: 0;
+    left: 0;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      red 0px,
+      orange 2px,
+      yellow 4px,
+      green 6px,
+      blue 8px,
+      purple 10px
+    );
+    background-size: 100% 12px;
+    animation: glitch 1s linear infinite;
+    opacity: 0.3;
+    pointer-events: none;
+  }
+
+  @keyframes glitch {
+    0% {
+      filter: hue-rotate(0deg);
+      transform: translateY(0);
+    }
+    50% {
+      filter: hue-rotate(90deg);
+      transform: translateY(-2px);
+    }
+    100% {
+      filter: hue-rotate(180deg);
+      transform: translateY(0);
+    }
+  }
+</style>
+<style title="hacked">
+  @keyframes blink {
+    50% {
+      opacity: 0;
+    }
+  }
+
+  #hk_console {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 3000;
+    background: #000;
+
+    color: #00ff41;
+
+    font-family: Consolas, monospace;
+
+    padding: 20px;
+
+    overflow-y: auto;
+
+    text-shadow: 0 0 5px #00ff41;
+  }
+
+  .hk_line {
+    margin: 2px 0;
+    white-space: pre-wrap;
+  }
+
+  .hk_success {
+    color: #7cff7c;
+  }
+
+  .hk_warning {
+    color: #ffd93d;
+  }
+
+  .hk_error {
+    color: #ff5e5e;
+  }
+
+  .hk_big {
+    font-size: 26px;
+    font-weight: bold;
+  }
+</style>
+<style>
+  .chat-area,
+  .chat-area * {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    box-sizing: border-box;
+  }
+
+  .chat-messages {
+    flex: 1;
+    margin-bottom: 12px;
+    padding: 20px 12px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #fafafa;
+    /* scroll-behavior: smooth; */
+    min-height: 45vh;
+    max-height: 45vh;
+  }
+
+  .chat-input {
+    display: flex;
+    gap: 8px;
+  }
+
+  .chat-input #who_joining {
+    height: 42px;
+    display: inline-block;
+    line-height: 180%;
+  }
+
+  .chat-input #who_joining:hover {
+    color: lightskyblue;
+  }
+
+  .chat-input input {
+    flex: 1;
+    min-width: 0;
+    height: 42px;
+    padding: 0 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    outline: none;
+  }
+
+  .chat-input input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+  }
+
+  .chat-input button {
+    width: 45px;
+    height: 42px;
+    border: none;
+    border-radius: 6px;
+    background: #2563eb;
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  @keyframes sendUp {
+    0% {
+      transform: translateY(3px);
+    }
+    100% {
+      transform: translateY(-3px);
+    }
+  }
+
+  /*보내기 전송 버튼*/
+  .chat-input button:nth-of-type(1):hover {
+    background: #1d4ed8;
+  }
+
+  .chat-input button:nth-of-type(1):hover > span {
+    animation: 0.5s ease-out 0s infinite normal sendUp;
+  }
+
+  /*채팅창 클린 버튼*/
+  .chat-input button:nth-of-type(2) {
+    background: lightskyblue;
+    color: dimgray;
+  }
+
+  @keyframes mop {
+    0% {
+      transform: translate(-2px) skew(-20deg, 10deg);
+    }
+    50% {
+      transform: translate(0) translateY(-1px);
+    }
+    100% {
+      transform: translate(2px) skew(20deg, -15deg);
+    }
+  }
+
+  .chat-input button:nth-of-type(2):hover {
+    background: skyblue;
+    color: #fff;
+  }
+
+  .chat-input button:nth-of-type(2):hover > span {
+    animation: 0.3s linear 0s infinite alternate mop;
+  }
+
+  .chat-area {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    /*resize: vertical;*/
+    overflow-y: auto;
+    min-height: 60vh;
+    max-height: 85vh;
+    /*max-height: 80vh;*/
+    max-width: 400px;
+    min-width: 400px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    z-index: 2000;
+  }
+
+  /*디자인용*/
+  .chat-area * {
+    /* //outline: 1px dotted; */
+  }
+</style>
+<style>
+  .chat-area .chat-messages::-webkit-scrollbar {
+    width: 10px; /* 스크롤바 두께 */
+  }
+
+  .chat-area .chat-messages::-webkit-scrollbar-track {
+    background: transparent; /* 트랙 배경 투명 */
+  }
+
+  .chat-area .chat-messages::-webkit-scrollbar-thumb {
+    background-color: skyblue; /* 스크롤바 색상 */
+    border-radius: 5px; /* 둥근 모서리 */
+    border: 2px solid transparent; /* 내용 침범 방지용 여백 */
+    background-clip: padding-box;
+  }
+
+  .chat-area .chat-title span:nth-of-type(1) ~ span {
+    color: gray;
+  }
+
+  .chat-area .chat-title span:nth-of-type(1) ~ span:hover {
+    color: black;
+  }
+
+  .chat-area:not(.close).person_cancel #chatMessages {
+    min-height: 45vh;
+    max-height: 45vh;
+  }
+
+  .close .chat-title .material-symbols-outlined.chat-title-button {
+    display: none;
+  }
+
+  /*접속자 확인창*/
+  .chat-area:not(.close) #whoBox {
+    width: 100%;
+    background: #fff;
+    height: 25vh;
+    overflow: hidden;
+  }
+
+  /*접속상태창이 닫혔을 때*/
+  .chat-area:not(.close).person_search #whoBox {
+    width: 0;
+    height: 0;
+  }
+
+  /*접속상태창이 열렸을 때*/
+  .chat-area:not(.close).person_cancel #whoBox {
+    padding-block: 10px;
+  }
+
+  .chat-area.close .chat-input input {
+    border-radius: 0;
+    background: transparent;
+    width: 350px;
+    border: none;
+    letter-spacing: 2px;
+  }
+
+  .chat-area.close .chat-input input:focus {
+    background: rgba(0, 0, 30, 0.6);
+    color: #fff;
+  }
+
+  .person_cancel #whoBox > h4 {
+  }
+
+  .person_cancel #whoBox > ul {
+    width: 100%;
+    max-height: 100%;
+    overflow-y: auto;
+    padding-inline: 10px;
+  }
+
+  .person_cancel #whoBox > ul > li {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    align-items: center;
+    margin-block: 10px;
+  }
+
+  .person_cancel #whoBox > ul > li:hover {
+    background: powderblue;
+  }
+
+  .person_cancel #whoBox > ul > li > figure,
+  .close #whoBox > ul > li > figure {
+    border-radius: 50%;
+    width: 15px;
+    height: 15px;
+    background: gray;
+  }
+
+  .close #whoBox > ul > li * {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .close #whoBox > ul > li > figure > b {
+    max-width: 50px;
+  }
+
+  #whoBox > ul > li {
+    position: relative;
+  }
+
+  #whoBox > ul > li > sup {
+    color: hotpink;
+    position: absolute;
+    top: -0.3em;
+  }
+  .close #whoBox > ul > li > sup {
+    position: relative;
+  }
+
+  .close #whoBox > ul > li > span {
+    max-width: 150px;
+  }
+
+  .close #whoBox > ul > li > figure {
+    margin-right: 3px;
+  }
+
+  .close #whoBox > ul > li > span {
+    margin-left: 20px;
+  }
+
+  .person_cancel #whoBox > ul > li > b {
+    width: 30%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .person_cancel #whoBox > ul > li > i {
+    width: 20%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-radius: 30px;
+    background: lightgray;
+    color: dimgray;
+    padding-inline: 3px;
+  }
+
+  /*입력 중*/
+  .person_cancel #whoBox > ul > li.chat_status1 > figure,
+  .close #whoBox > ul > li.chat_status1 > figure {
+    background: lightgreen;
+  }
+
+  .person_cancel #whoBox > ul > li.chat_status1 > i:after {
+    content: "Typing..";
+  }
+
+  /*정지 중*/
+  .person_cancel #whoBox > ul > li.chat_status-1 > i,
+  .close #whoBox > ul > li.chat_status-1 > i {
+    background: salmon;
+    color: darkred;
+  }
+
+  .person_cancel #whoBox > ul > li.chat_status-1 > i:after {
+    content: "Banned";
+  }
+
+  .person_cancel #whoBox > ul > li > span {
+    width: 40%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background: rgba(200, 200, 250);
+    color: navy;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    white-space: nowrap;
+    padding-inline: 6px;
+  }
+
+  /*접속자 메뉴*/
+  #whoMenu {
+    position: absolute;
+    display: none;
+    list-style: none;
+    z-index: 5001;
+    background: dimgray;
+    box-shadow: 2px 2px 1px gray;
+  }
+  #whoMenu.show {
+    display: flex;
+    flex-direction: column;
+  }
+  #whoMenu li {
+    width: 80px;
+    height: fit-content;
+    font-size: 1rem;
+    padding: 0.5px;
+    text-indent: 2px;
+    background: lightgray;
+    border-bottom: 1px solid dimgray;
+  }
+  #whoMenu li:hover {
+    background: #fff;
+  }
+
+  /*채팅 알림*/
+  @keyframes notify_msg {
+    0% {
+      background: transparent;
+    }
+    50% {
+      background: transparent;
+    }
+    51% {
+      background: red;
+    }
+    100% {
+      background: red;
+    }
+  }
+
+  .chat-area .chat-title b {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    visibility: hidden;
+  }
+
+  .chat-area.close .chat-title b {
+    width: 10px;
+    height: 10px;
+    transform: translate(15px, -15px);
+  }
+
+  .chat-area.close .chat-title b.alarm {
+    visibility: visible;
+    animation: 0.8s steps(2, end) 0s infinite normal notify_msg;
+  }
+
+  .chat-area.close #whoBox {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    width: 400px;
+    padding: 20px 15px;
+    border-radius: 10px;
+    box-shadow: 5px 5px 9px rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.7);
+  }
+
+  .chat-area.close .user-chip {
+    display: none;
+  }
+
+  .chat-area.close #whoBox > ul {
+    max-height: 120px;
+    height: fit-content;
+    overflow-y: auto;
+  }
+
+  .chat-area.close #whoBox > ul > li {
+    margin-block: 8px;
+    display: flex;
+    align-items: center;
+  }
+
+  /*minimize - 클릭시 창 최소화*/
+  .chat-area.minimize {
+    min-height: 80px;
+    max-height: 80px;
+    resize: none;
+  }
+
+  .chat-area.minimize .section-header ~ * {
+    visibility: hidden;
+    min-height: 0;
+    max-height: 0;
+  }
+
+  /*close x클릭시 창 죽이기*/
+  .chat-area.close .chat-input,
+  .chat-area.close .user-chip,
+  .chat-area.close .chat-title span:nth-of-type(1) ~ * {
+    position: fixed;
+    bottom: 40vh;
+    left: 10px;
+  }
+
+  .chat-area.close #chatDetector,
+  .chat-area.close .chat-input #who_joining,
+  .chat-area.close .chat-input button {
+    display: none;
+  }
+
+  .chat-area.close {
+    resize: none;
+    outline: 5px solid gray;
+    box-shadow: 3px 3px 3px rgba(0, 0, 0, 0.5);
+    z-index: 900;
+  }
+
+  .chat-area.close > div.section-header > h2 {
+    font-size: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 60px;
+    height: 60px;
+    padding: 5%;
+  }
+
+  .chat-area.close,
+  .chat-area.close .section-header {
+    border-radius: 50%;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    margin: 0;
+  }
+
+  .chat-area:not(.close) .chat-messages {
+    margin-bottom: 12px;
+  }
+
+  .chat-area.close .chat-messages {
+    position: fixed;
+    bottom: 45vh;
+    left: 10px;
+    width: 350px;
+    min-height: 0;
+    height: fit-content;
+    max-height: 30vh;
+    background: rgba(0, 0, 50, 0.5);
+    padding: 0;
+    padding-inline: 10px 5px;
+    opacity: 0.8;
+    border: none;
+    margin-bottom: 0;
+    border-radius: 0;
+  }
+
+  .chat-area.close .chat-messages img {
+    display: none;
+  }
+
+  @keyframes fadeoutt {
+    0% {
+      visibility: visible;
+      opacity: 1;
+    }
+    99% {
+      visibility: visible;
+      opacity: 0.3;
+    }
+
+    100% {
+      visibility: hidden;
+      opacity: 0;
+    }
+  }
+
+  .chat-area.close span > a {
+    color: cyan;
+  }
+  .chat-area.close span > a:visited {
+    color: lightgray;
+  }
+
+  .chat-area.close .chat-messages.off {
+    background: transparent;
+    animation: 5s ease-in 0s 1 normal fadeoutt;
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  .chat-area.close .chat-messages.off *:nth-of-type(n) {
+    text-shadow: 1px 1px 1px #000;
+  }
+
+  .chat-area.close .chat-messages:hover {
+    opacity: 1;
+  }
+
+  .chat-area.close .chat-messages::-webkit-scrollbar {
+    appearance: none;
+    width: 0;
+  }
+
+  .chat-area.close .material-symbols-outlined:nth-of-type(1) {
+    font-size: 2rem;
+    line-height: 180%;
+  }
+
+  .chat-area.close:hover {
+    outline: 5px solid #fff;
+    background: cornflowerblue;
+  }
+
+  .chat-area.close .material-symbols-outlined:nth-of-type(1):hover {
+    /*transform: scale(1.2);*/
+    background: cornflowerblue;
+    color: #fff;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+    width: 100%;
+  }
+
+  .user-chip {
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #3730a3;
+    font-size: 13px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    max-width: 100px;
+  }
+
+  /*말풍선 떠오르는 효과 : 지금 없앤 상태 : 전체 새로고침이 계속 되어서..*/
+  @keyframes chatUp {
+    0% {
+      opacity: 0;
+      transform: translateY(15px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /*채팅창 메시지*/
+  .chat-area .notice,
+  .chat-area .warn,
+  .chat-area .msg {
+    clear: both;
+    margin-bottom: 5px;
+  }
+
+  .chat-area .msg > * {
+    margin-block: 5px;
+  }
+
+  .chat-area .notice,
+  .chat-area .warn {
+    line-height: 180%;
+    padding: 2px 10px;
+    border-radius: 20px;
+  }
+
+  .chat-area.close .notice,
+  .chat-area.close .warn {
+    padding: 1px 0;
+  }
+
+  .chat-area.close .notice:before,
+  .chat-area.close .warn:before {
+    content: "*";
+  }
+
+  /*공통 알림*/
+  .chat-area .notice {
+    background: rgb(70, 70, 70);
+    color: gainsboro;
+  }
+
+  .chat-area.close .notice {
+    background: transparent;
+    color: orange;
+  }
+
+  .chat-area .notice > mark {
+    background: transparent;
+    color: #fff;
+  }
+
+  .chat-area .notice > b {
+    color: gold;
+  }
+
+  /*경고 알림*/
+  .chat-area .warn {
+    background: rgba(200, 200, 200);
+    color: maroon;
+  }
+
+  .chat-area.close .warn {
+    background: transparent;
+    color: orange;
+  }
+
+  .chat-area .warn > mark,
+  .chat-area .warn > b {
+    background: transparent;
+    color: red;
+  }
+
+  /*내 메시지*/
+  .chat-area .msg {
+    /* //animation: 0.3 s ease-out 0 s 1 normal chatUp; */
+  }
+
+  .chat-area .msg > span {
+    float: right;
+    padding: 5px;
+    border-radius: 20px 20px 0 20px;
+    word-break: break-word;
+    max-width: 80%;
+    box-shadow: 2px 3px 0 dodgerblue;
+    padding: 5px 10px;
+    padding-left: 15px;
+    background: rgb(180, 250, 240);
+  }
+
+  .chat-area .msg > span img {
+    max-width: 90%;
+    height: auto;
+  }
+
+  .chat-area .msg > span > sub {
+    float: right;
+  }
+
+  /*타인 메시지*/
+  .chat-area .msg > figure {
+    float: left;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 15%;
+  }
+
+  .close .chat-area .msg > figure {
+    align-items: end;
+  }
+
+  /*프로필 클릭시 확대하기*/
+  .chat-area .msg > figure:active {
+    transform: translate(9rem) scale(5);
+  }
+
+  .chat-area .msg > figure:active > div {
+    box-shadow:
+      0 0 9px #fff4e6,
+      0 9px 0 rgba(100, 100, 100, 0.6);
+  }
+
+  .chat-area .msg > figure > div {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: cornflowerblue;
+  }
+
+  .chat-area .msg > figure > sup {
+    margin: 0 auto;
+    overflow: hidden;
+    width: 100%;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .chat-area .msg > span {
+    background: rgb(180, 230, 255);
+  }
+
+  .chat-area:not(.close) .msg[title$="의 귓말"] > span {
+    background: pink;
+    color: saddlebrown;
+  }
+  .chat-area:not(.close) .msg[title$="의 귓말"] > figure + span {
+    background: lightpink;
+  }
+
+  .chat-area:not(.close) .msg[title$="의 귓말"] > span > sub {
+    color: gray;
+  }
+
+  .chat-area .msg:nth-of-type(2n) > figure + span {
+    background: rgb(200, 240, 255);
+  }
+
+  .chat-area .msg > figure + span {
+    float: left;
+    border-radius: 0 20px 20px 20px;
+    box-shadow: 2px 2px 3px darkgray;
+    padding-inline: 10px 15px;
+    margin-left: 5px;
+  }
+
+  .close .msg > figure > div {
+    display: none;
+  }
+
+  .close .msg > figure > sup {
+    margin: 0;
+    margin-left: 0;
+    font-weight: bold;
+    background: transparent;
+    display: table-cell;
+    width: fit-content;
+    padding-inline: 0;
+    text-align: left;
+    color: chartreuse;
+    font-size: 16px;
+    margin-right: 0;
+    text-shadow:
+      0 0 1px #fff,
+      0 0 1px #fff;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 50px;
+    font-size: inherit; /* 부모 글자 크기 따라가기 */
+    line-height: inherit; /* 줄 높이 맞추기 */
+    vertical-align: baseline; /* 위 첨자 위치를 일반 텍스트 위치로 */
+  }
+
+  .chat-area.close .notice,
+  .chat-area.close .warn,
+  .chat-area.close .msg {
+    margin-bottom: 0;
+  }
+
+  .close .msg:nth-of-type(2n) > figure > sup {
+  }
+
+  .close .msg span {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .chat-area.close .notice > mark {
+    color: yellow;
+  }
+
+  /*나의*/
+  .close .msg > span {
+    max-width: 100%;
+    border-radius: 10px;
+    float: left;
+    background: transparent;
+    color: #fff;
+    text-shadow:
+      0 0 1px #fff,
+      0 0 1px #fff;
+    box-shadow: none;
+    padding: 0;
+    margin-block: 3px;
+    clear: none;
+  }
+
+  .chat-area.close .msg > figure {
+    float: none;
+    display: inline;
+    max-width: 15%;
+    margin-inline: 0;
+    margin-block: 0;
+  }
+
+  .chat-area.close .msg > figure * {
+    margin-block: 0;
+  }
+
+  .chat-area.close .msg > figure + span {
+    width: 90%;
+    border-radius: 10px;
+    float: left;
+    background: transparent;
+    text-shadow:
+      0 0 1px #fff,
+      0 0 1px #fff;
+    box-shadow: none;
+    padding: 0;
+    margin-block: 3px;
+    clear: none;
+    display: inline;
+    color: #fff;
+    width: 80%;
+    float: none;
+    margin-inline: 0;
+  }
+
+  .chat-area.close .msg[title$="의 귓말"] > span {
+    color: lightpink;
+  }
+
+  .chat-area.close .msg > figure + span > sub {
+    float: none;
+  }
+
+  .close .msg > span:before {
+    content: "[나]";
+    font-weight: bold;
+    margin-right: 8px;
+    color: aqua;
+  }
+
+  /*남의 상대의*/
+  .chat-area.close .msg > figure + span:before {
+    content: "";
+  }
+
+  .chat-area.close .msg > figure:before {
+    content: "[";
+    color: chartreuse;
+    font-weight: bold;
+  }
+
+  .chat-area.close .msg > figure:after {
+    content: "]";
+    color: chartreuse;
+    font-weight: bold;
+  }
+
+  /*날짜 및 신고버튼*/
+  .chat-area .msg sub {
+    color: lightgray;
+  }
+
+  .chat-area .msg figure + span sub {
+    float: left;
+  }
+
+  .chat-area .msg figure + span sub + u:before {
+    content: "[신고]";
+  }
+
+  .chat-area .msg span sub + del:before {
+    content: "[삭제]";
+  }
+
+  .chat-area .msg sub + u,
+  .chat-area .msg sub + del {
+    float: right;
+  }
+
+  .chat-area .msg sub + u:not(:hover),
+  .chat-area .msg sub + del:not(:hover) {
+    text-decoration: none;
+    color: goldenrod;
+  }
+
+  .chat-area .msg sub + u:hover,
+  .chat-area .msg sub + del:hover {
+    color: red;
+  }
+
+  .close .msg > span > sub {
+    display: inline-block;
+    margin-left: 5px;
+  }
+
+  .close .msg > span > sub:before {
+    content: "(";
+  }
+
+  .close .msg > span > sub:after {
+    content: ")";
+  }
+
+  .close .msg span > br,
+  .close .msg u {
+    display: none;
+  }
+
+  .chat-area + .readme {
+    padding: 20px;
+    z-index: 2001;
+    position: fixed;
+    width: fit-content;
+    bottom: 5px;
+    right: 5px;
+    max-width: 500px;
+    background: rgba(255, 255, 200, 0.9);
+    visibility: hidden;
+    height: 100vh;
+    overflow-y: scroll;
+  }
+
+  .chat-area + .readme.view {
+    visibility: visible;
+  }
+
+  /**/
+  #chatDetector {
+    display: flex;
+    position: absolute;
+    transform: translate(0, 40px);
+    font-size: 0.8rem;
+    width: 92%;
+    height: fit-content;
+    background: rgba(235, 245, 250, 0.8);
+    text-indent: 5px;
+    color: dimgray;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+
+  #chatDetector > i {
+    margin-inline: 2px;
+  }
+
+  #chatDetector > i:after {
+    content: "명 보는 중";
+  }
+
+  @keyframes shock {
+    0% {
+      transform: translate(-10px, -10px);
+    }
+    100% {
+      transform: translate(10px, 10px);
+    }
+  }
+
+  @media (pointer: coarse) {
+    .chat-area {
+      transform: translate(30vw, 20vh) scale(2);
+      resize: none;
+      max-height: 30vh;
+      min-height: 30vh;
+    }
+
+    .chat-area:not(.close).person_cancel {
+      max-height: 33vh;
+      min-height: 33vh;
+    }
+
+    .chat-area:not(.close)[class*="person_"] #chatMessages {
+      min-height: 20vh;
+      max-height: 20vh;
+    }
+
+    .chat-area
+      .chat-title
+      span:nth-of-type(1)
+      ~ span.material-symbols-outlined {
+      display: none;
+    }
+  }
+</style>
+<div class="chat-area person_search">
+  <div class="section-header" draggable="true">
+    <h2 class="chat-title">
+      <b id="chat_alarm"></b>
+      <span
+        class="material-symbols-outlined"
+        onclick="
+          event.stopPropagation();
+          newChat.open();
+          chatArea.style.top = '15vh';
+          chatArea.style.bottom = 'auto';
+        "
+        >chat</span
+      >
+      채팅
+      <!--      <span-->
+      <!--          class="material-symbols-outlined chat-title-button"-->
+      <!--          onclick="toggleClass(document.querySelector('.chat-area'), 'minimize')"-->
+      <!--      >remove</span-->
+      <!--      >-->
+      <span
+        class="material-symbols-outlined chat-title-button"
+        onclick="document.querySelector('.readme').classList.add('view')"
+        >question_mark</span
+      >
+      <span
+        class="material-symbols-outlined chat-title-button"
+        onclick="newChat.close()"
+        >close_small</span
+      >
+    </h2>
+    <span class="user-chip">guest</span>
+    <p id="chatDetector">
+      <span class="material-symbols-outlined"> visibility </span><i>0</i>
+    </p>
+  </div>
+  <div class="chat-messages off" id="chatMessages"></div>
+  <div class="chat-input">
+    <span
+      class="material-symbols-outlined"
+      id="who_joining"
+      onclick="
+        this.textContent == 'person_cancel'
+          ? (this.textContent = 'person_search')
+          : (this.textContent = 'person_cancel');
+        chatArea.classList.replace(
+          Array.from(chatArea.classList).filter((f) =>
+            f.startsWith('person_'),
+          )[0],
+          this.textContent,
+        );
+      "
+      >person_search</span
+    >
+    <input
+      type="text"
+      id="content"
+      placeholder="Enter로 활성화"
+      autocomplete="off"
+      list="orderList"
+    />
+    <button type="button" onclick="sendMessage()">
+      <span class="material-symbols-outlined">arrow_upward</span>
+    </button>
+    <button
+      type="button"
+      onclick="
+        chatMessages.innerHTML = '';
+        msgidx = -1;
+        cloudidx = -1;
+      "
+    >
+      <span class="material-symbols-outlined">mop</span>
+    </button>
+  </div>
+  <div id="whoBox">
+    <h4>다들 뭘 하고 있을까요?</h4>
+    <ul></ul>
+  </div>
+</div>
+<div class="readme" onclick="this.classList.remove('view')">
+  <h3>메인화면 대화방 매뉴얼</h3>
+  0. 로그인한 유저만 대화에 참여 가능<br />
+  * guest - 읽기모드<br />
+  <br />
+  1. 입력란 컨트롤 - 입력란 활성화 : Enter<br />
+  - 줄바꿈 태그 입력 : Shift+Enter<br />
+  - 채팅창 스크롤 : PageUp/PageDown<br />
+  - 채팅창 처음-끝 스크롤 : (Shift) PageUp/PageDown<br />
+  - 이전 채팅 복사 : 위아래 화살표<br />
+  <br />
+  2. 공지<br />
+  - 새 유저 메인화면 입장시 (입장했습니다)<br />
+  - 유저 메인화면 이탈시 (나갔습니다)<br />
+  - 신고시 (신고되었습니다)<br />
+  - 60초 정지 풀릴시 (신고가 해제되었습니다)<br />
+  - 경고 : 유명인 사칭, 혐오표현, 비속어, 장문도배(150자)<br />
+  <br />
+  3. 멀티미디어<br />
+  - 이미지 확장자(.png, .jpg, .gif) 등으로 끝나는 링크를 올리면 이미지 전송<br />
+  - 일반 하이퍼링크를 올리면 링크버튼 활성화<br />
+  <br />
+  4. 신고 기능<br />
+  - 유저 말풍선 끝에 [신고]를 누르면 해당 유저 60초 채팅 정지<br />
+  - 페이지를 벗어나면 해제<br />
+  - /free [유저이름] 입력하면 신고 해제<br />
+  <br />
+  5. 명령어<br />
+  - 대화창 클리어 : /클린 /c /clean /clear<br />
+  - 사용자 공지 : /공지 /note /notice [공지내용]<br />
+  - 채팅창 왼쪽으로 : /left /l<br />
+  - 채팅창 오른쪽으로 : /right /r<br />
+  - 채팅창 최소화 : /mini /m /최소화 /숨기기 /hide<br />
+  - 유저 신고하기 : /ban [유저이름]<br />
+  - 유저 신고풀기 : /free [유저이름]<br />
+  - 날씨 확인하기 : /날씨 [날짜] [지역]<br />
+  <br />
+  6. 창 컨트롤<br />
+  - 말풍선 아이콘 클릭 : 채팅<br />
+  - 말풍선 아이콘 드래그 : 채팅창 위치 이동<br />
+  - [ ? ] 버튼 : 사용법<br />
+  - [ x ] 버튼 : 채팅창 최소화 (읽기 모드)<br />
+  - 채팅창 우측 아래 모서리 드래그 : 채팅창 길이 조절<br />
+  - 유저 프로필 클릭하면 프로필 확대
+</div>
+<datalist id="orderList"></datalist>
+<datalist id="connusers"></datalist>
+<div id="notification_a" class="notification_a"></div>
+<div id="whoMenu"></div>
+<script th:src="@{/js/chat_img_data.js}"></script>
+<script th:src="@{/js/chat_filter_data.js}"></script>
+<script th:src="@{/js/chatwithme.js}"></script>
+<div th:replace="~{widjet/nomorejoin}"></div>
+<script class="chat_script" th:inline="javascript">
+  const contentInput = document.getElementById("content");
+  const fixname = document.querySelector(".user-chip");
+
+  let MY_USER_ID = Number(
+    /*[[${#authentication.principal == 'anonymousUser'
+          ? 0
+          : #authentication.principal.uid}]]*/ 0,
+  );
+  const user_id = String(MY_USER_ID);
+
+  let MY_NAME =
+    /*[[${#authentication.principal == 'anonymousUser'
+          ? 'guest'
+          : #authentication.principal.name}]]*/ "guest";
+
+  fixname.innerText = MY_NAME;
+  fixname.title = MY_NAME;
+  if (MY_NAME == "guest") {
+    contentInput.value = "로그인한 회원만 채팅이 가능합니다";
+    contentInput.disabled = true;
+  }
+
+  const newChat = {
+    open: () => {
+      if (chatArea.classList.contains("close")) {
+        chat_alarm.classList.remove("alarm");
+        chatArea.classList.remove("close");
+        chatMessages.classList.remove("off");
+        contentInput.focus();
+      }
+    },
+    close: () => {
+      toggleClass(document.querySelector(".chat-area"), "close");
+      chatMessages.classList.add("off");
+      contentInput.blur();
+      // chatArea.style.removeProperty('height');
+      // chatArea.classList.add("close");
+    },
+    openxy: () => {
+      if (isTouchDevice()) chatArea.style.inset = "0px auto auto 0px";
+      else {
+        chatArea.style.inset = "15vh 15px auto auto";
+      }
+    },
+    closexy: () => {
+      if (isTouchDevice()) chatArea.style.inset = "0px auto auto 0px";
+      else {
+        chatArea.style.right = "15px";
+        chatArea.style.bottom = "auto";
+        chatArea.style.left = "auto";
+        chatArea.style.top = "60vh";
+      }
+    },
+    clear: () => {
+      chatMessages.innerHTML = "";
+      msgidx = -1;
+      cloudidx = -1;
+      sessionStorage.removeItem("lastmsg");
+      sessionStorage.removeItem("chatWindow");
+    },
+  };
+
+  function isTouchDevice() {
+    return (
+      "ontouchstart" in window ||
+      navigator.maxTouchPoints > 0 ||
+      navigator.msMaxTouchPoints > 0
+    );
+  }
+
+  let chatArea = document.querySelector(".chat-area");
+  //시작 위치 : 닫힘
+  newChat.closexy();
+  chatArea.querySelector(".section-header").ondragend = (e) => {
+    e.stopPropagation();
+    //직접 이동시
+    chatArea.style.left = e.clientX - 30 + "px";
+    chatArea.style.top = e.clientY - 30 + "px";
+    chatArea.style.bottom = "auto";
+    chatArea.style.right = "auto";
+    contentInput.focus();
+  };
+</script>
+<script th:inline="javascript" class="chat_script">
+  let stompClient = null;
+  let connected = false;
+  let cursorQueue = [];
+  let cursorBatchTimer = null;
+
+  //채팅 외 유저 기타 데이터 전송함수 (스톰클라이언트 따로 뺌)
+  //stompStatus(1,0) 위치만 반영해서 접속 상태를 알릴 때 주로 사용
+  function stompStatus(
+    reqCode = 0,
+    status = 0,
+    chatterLoc = location.pathname + location.search,
+  ) {
+    if (stompClient && connected && user_id != 0) {
+      stompClient.send(
+        "/app/chat.status",
+        {},
+        JSON.stringify({
+          chatterId: user_id,
+          chatterName: fixname.innerText,
+          chatterLoc: chatterLoc,
+          status: status /*0이면 standby, -1이면 banned, 1이면 typing*/,
+          reqCode:
+            reqCode /*0이면 채팅 상태반영, 1이면 위치동작반영, 2면 둘다 반영*/,
+          profileImg: null,
+        }),
+      );
+    }
+  }
+
+  //다른 유저의 상태, 주로 ban반영
+  //syncStatus(username,-1)
+  function syncStatus(uname, status = 0, reqCode = 0) {
+    if (stompClient && connected) {
+      stompClient.send(
+        "/app/chat.status",
+        {},
+        JSON.stringify({
+          chatterId: user_id,
+          chatterName: uname,
+          chatterLoc: "/",
+          status: status /*0이면 standby, -1이면 banned, 1이면 typing*/,
+          reqCode:
+            reqCode /*0이면 채팅 상태반영, 1이면 위치동작반영, 2면 둘다 반영*/,
+          profileImg: null,
+        }),
+      );
+    }
+  }
+
+  const pageNamed = {};
+
+  //데이터 교환부
+  function connect() {
+    //소켓 연결부
+    const socket = new SockJS("/ws");
+    stompClient = Stomp.over(socket);
+    stompClient.debug = null;
+
+    stompClient.connect({}, function () {
+      connected = true;
+      stompClient.subscribe("/topic/chatroom", function (message) {
+        showMessage(JSON.parse(message.body));
+      });
+      stompClient.subscribe("/topic/status", function (message) {
+        const parse = JSON.parse(message.body);
+        const data = parse.body;
+        if (
+          userBox.querySelector(`[title="${data.chatterName}"]`) == null &&
+          data.reqCode < 3
+        )
+          whoChat.enter(data);
+        switch (data.reqCode) {
+          case 0: //채팅 상태 반영
+            userBox.querySelector(`[title="${data.chatterName}"]`).classList =
+              "chat_status" + data.status;
+            break;
+          case 1: //위치 동작 반영
+            userBox
+              .querySelector(`[title="${data.chatterName}"]`)
+              .querySelector("span").innerText = data.chatterLoc;
+            break;
+          case 2: //둘다 반영
+            userBox.querySelector(`[title="${data.chatterName}"]`).classList =
+              "chat_status" + data.status;
+            userBox
+              .querySelector(`[title="${data.chatterName}"]`)
+              .querySelector("span").innerText = data.chatterLoc;
+            break;
+          case 3:
+            whoChat.leave(data); //제거
+        }
+      });
+
+      if (stompClient && connected) {
+        //처음 연결받는 부분
+        if (user_id != 0) {
+          stompStatus(1, 0);
+          if (
+            location.pathname == "/" &&
+            sessionStorage.getItem("lastmsg") == null
+          ) {
+            chatMessages.innerHTML += `<div class="notice" title="${new Date().toLocaleTimeString().split(":").slice(0, 2).join(":")}"><b>[플래너즈]</b> <mark></mark>이곳은 대기실입니다. 많은 사람들이 이용하는 공간이므로 에티켓을 지킵시다</div>`;
+            setTimeout(
+              () =>
+                (chatMessages.innerHTML += `<div class="notice" title="${new Date().toLocaleTimeString().split(":").slice(0, 2).join(":")}"><b>[이용방법]</b> <mark></mark><br>- Enter로 입력 활성화, ESC로 포커스 아웃<br>- 대화방 열기는 Ctrl+Space<br>- 각종 명령어는 / (슬래시)를 치면 나옵니다</div>`),
+              1500,
+            );
+            //custom_notice(
+            //'<font color="aqua">피카배구 숨기기는 CapsLock!<br>/피카 명령어로 친구를 피카배구에 초대하세요!</font>',
+            //);
+          }
+        }
+      }
+      startCursorBatchSender();
+    });
+  }
+
+  function startCursorBatchSender() {
+    if (cursorBatchTimer) return;
+
+    cursorBatchTimer = setInterval(function () {
+      if (!stompClient || !connected || cursorQueue.length === 0) return;
+
+      const batch = cursorQueue.slice();
+      cursorQueue = [];
+
+      stompClient.send(
+        "/app/cursor.batch",
+        {},
+        JSON.stringify({
+          cursors: batch,
+        }),
+      );
+    }, 50);
+  }
+
+  const userBox = whoBox.querySelector("ul");
+
+  //유저 상태 whoBox 컨트롤러///
+  let whoChat = {
+    enter: (data) => {
+      userBox.innerHTML += `<li onclick="show_whoMenu(this.title)" title="${data.chatterName}" class="chat_status${data.status}"><figure></figure><b>${data.chatterName}</b><sup>${data.chatterName == fixname.innerText ? "me" : ""}</sup><i></i><span></span></li>`;
+      // usertagBox.innerHTML+=`<div title="${data.chatterName}"><figure></figure><p>${data.chatterName}</p></div>`;
+      chatDetector.querySelector("i").innerText = userBox.childElementCount;
+      //그리고 이때 모든 유저가 자신의 상태를 전송 : 동기화
+      stompStatus(1, 0);
+      //밴 유저의 새로고침 방지
+      ///
+    },
+    leave: (data) => {
+      userBox.querySelector(`[title="${data.chatterName}"]`)?.remove();
+      chatDetector.querySelector("i").innerText = userBox.childElementCount;
+    },
+  };
+
+  function ishere(personame) {
+    return userBox.querySelector(`[title="${personame}"]`) != null;
+  }
+
+  //클린할 때마다 초기화되야 한다
+  let msgidx = -1;
+  let cloudidx = -1;
+
+  function msgRef(updown = 1) {
+    //대화창에 msg가 하나라도 있으면
+    if (chatMessages.querySelectorAll(".msg") != null) {
+      //입력된 메시지 0보다 크면 윗 번호, 번호가 없거나(-1) 0이면 마지막 번호(0)
+      //위로 가는 화살표(1), 아래로 가는 화살표(-1)
+      if (updown > 0)
+        msgidx =
+          msgidx > 0
+            ? --msgidx
+            : chatMessages.querySelectorAll(".msg").length - 1;
+      else
+        msgidx =
+          msgidx < 0
+            ? -1
+            : msgidx < chatMessages.querySelectorAll(".msg").length - 1
+              ? ++msgidx
+              : 0;
+      //입력된 메시지 번호가 없으면 그대로, 번호가 있는데 마지막 번호보다 작으면 더하고, 같으면 0
+      //그리고 번호가 있으면 메시지 추출
+      if (msgidx > -1)
+        contentInput.value = chatMessages
+          .querySelectorAll(".msg")
+          [msgidx].querySelector("span")
+          .innerHTML.split("<br><sub>오")[0];
+    }
+  }
+
+  //contextmenu for whoBox
+  const whoCtrl = {
+    comehere: (p) => {
+      let mylink = location.pathname + location.search;
+      sendOnly("/pull " + p + " " + mylink);
+    },
+    invite: (p) => {
+      let mylink = location.pathname + location.search;
+      sendOnly("/초대 " + p + " " + mylink);
+    },
+    pursue: (p) => {
+      sendOnly("/불러줘 " + p);
+    },
+    ban: (p) => {
+      banCtrl.isban(p) ? banCtrl.free(p) : banCtrl.ban(p);
+    },
+    secret: (p) => {
+      if (
+        !contentInput.value.startsWith("/to " + p) &&
+        !banCtrl.isban(fixname.innerText)
+      )
+        contentInput.value = "/to " + p + " " + contentInput.value.trim();
+      contentInput.focus();
+    },
+    logout: (p) => sendOnly(`/logout ${p}`),
+  };
+
+  const whoMenu_label = {
+    귓말: "secret",
+    초대: "invite",
+    따라가기: "pursue",
+    신고: "ban",
+    로그아웃: "logout",
+  };
+  for (let a_whoMenu in whoMenu_label)
+    whoMenu.innerHTML += `<li onclick="whoCtrl.${whoMenu_label[a_whoMenu]}(whoMenu.title);whoMenu.classList.remove('show');">${a_whoMenu}</li>`;
+  //이름 클릭시
+  function show_whoMenu(a_planner) {
+    a_planner != fixname.innerText
+      ? whoMenu.classList.add("show")
+      : whoMenu.classList.remove("show");
+    whoMenu.title = a_planner;
+    whoMenu.style.inset =
+      event.clientY -
+      70 +
+      "px auto auto " +
+      parseInt(event.clientX + 30) +
+      "px";
+    whoMenu.querySelector('[onclick*="ban"]').textContent = banCtrl.isban(
+      a_planner,
+    )
+      ? "풀어주기"
+      : "신고";
+  }
+
+  //대화창 스크롤 자동 이동 함수
+  function scrollbyKey(updown = 1) {
+    //대화창에 msg가 하나라도 있으면
+    if (chatMessages.querySelectorAll(".msg") != null) {
+      //위로 가는 화살표(1), 아래로 가는 화살표(-1)
+      if (updown > 0)
+        // 위로 이동: -1이면 길이-1값, 그리고 0보다 클 때만 줄어들게,
+        cloudidx = cloudidx > 0 ? --cloudidx : 0;
+      else
+        // 아래로 이동: 아래거는 -1이면 그대로 두고, 길이-1값보다 작을 때만 커지게
+        cloudidx =
+          cloudidx < chatMessages.querySelectorAll(".msg").length - 1
+            ? ++cloudidx
+            : chatMessages.querySelectorAll(".msg").length - 1;
+      //그리고 번호가 있으면 메시지 추출
+
+      if (cloudidx > -1)
+        cloudidx == 0
+          ? (chatMessages.scrollTop = 0)
+          : (chatMessages.scrollTop =
+              chatMessages.querySelectorAll(".msg")[cloudidx].offsetTop);
+      else contentInput.focus();
+    }
+  }
+
+  contentInput.addEventListener("focus", () => {
+    //그리고 이때 모든 유저가 자신의 채팅 참여 상태를 전송 : 새로고침 유저 동기화
+    stompStatus(1, 0);
+    !contentInput.disabled
+      ? (contentInput.placeholder = "명령어는 /로 시작, 귓말은 @로 시작")
+      : (contentInput.placeholder = "클린한 채팅 문화를 준수합시다");
+    chatMessages.classList.remove("off");
+    chat_alarm.classList.remove("alarm");
+  });
+
+  contentInput.addEventListener("blur", () => {
+    stompStatus(2, 0);
+    contentInput.placeholder = "Enter로 활성화";
+    chatMessages.classList.add("off");
+  });
+
+  let chatHide; //타임아웃
+  // //새로운 메시지 추가 감지 이거 안 됨 혼자서만 됨
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((m) => {
+      if (m.type === "childList")
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    });
+  });
+  observer.observe(chatMessages, { childList: true });
+
+  chatArea.addEventListener("click", () => {
+    stompStatus(1, 0);
+  });
+
+  contentInput.addEventListener("input", () => {
+    contentInput.value.length > 0 ? stompStatus(2, 1) : stompStatus(2, 0);
+  });
+
+  contentInput.addEventListener("keyup", (k) => {
+    if (contentInput.value == "@") {
+      let conn_users = userBox.innerText
+        .replace("\nme\n", "\n")
+        .split("\n")
+        .filter((x, i) => x != fixname.innerText && i % 2 === 0);
+      connusers.innerHTML =
+        `<option value="@` +
+        conn_users.join(` " label="에게 귓말"></option><option value="@`) +
+        ` " label="에게 귓말"></option>`;
+      contentInput.setAttribute("list", "connusers");
+    } else if (contentInput.value == "/") {
+      contentInput.setAttribute("list", "orderList");
+    }
+  });
+
+  //입력창 키 컨트롤
+  contentInput.addEventListener("keydown", (k) => {
+    switch (k.key) {
+      case "Enter":
+        k.preventDefault();
+        k.shiftKey
+          ? (contentInput.value += "<br>")
+          : contentInput.value.trim().length == 0
+            ? chatArea.classList.contains("close")
+              ? contentInput.blur()
+              : contentInput.focus()
+            : sendMessage();
+        break;
+      case "ArrowUp":
+        k.preventDefault();
+        msgRef(1);
+        break;
+      case "ArrowDown":
+        k.preventDefault();
+        msgRef(-1);
+        break;
+      case "PageUp":
+        k.preventDefault();
+        k.shiftKey ? (chatMessages.scrollTop = 0) : scrollbyKey(1);
+        break;
+      case "PageDown":
+        k.preventDefault();
+        k.shiftKey
+          ? (chatMessages.scrollTop = chatMessages.scrollHeight)
+          : scrollbyKey(-1);
+        break;
+      case "Escape":
+        if (document.activeElement === contentInput) contentInput.blur();
+        if (!chatArea.classList.contains("close")) newChat.close();
+        newChat.closexy();
+        break;
+      case "Backspace":
+        //귓말 치다가 이름에서 지울 때 다 지워서 에러 없도록
+        let inputedtxt = contentInput.value;
+        if (
+          (inputedtxt.startsWith("/to ") &&
+            ishere(inputedtxt.substring(inputedtxt.indexOf(" ") + 1).trim())) ||
+          (inputedtxt.startsWith("@") && ishere(inputedtxt.substring(1).trim()))
+        ) {
+          contentInput.value = "";
+          contentInput.focus();
+        }
+        break;
+    }
+  });
+
+  function rand(max, min = 0, gap = 1, rs = 0) {
+    let tmpmax = [];
+    if (typeof max == "object") {
+      if (max.length == undefined) {
+        for (mkey in max) {
+          tmpmax.push(mkey);
+        }
+      } else tmpmax = max.slice(0, max.length);
+    }
+    typeof max == "object"
+      ? (rs = tmpmax[Math.floor(Math.random() * tmpmax.length)])
+      : (rs =
+          Math.floor(Math.random() * (parseInt(max - min) / gap + 1)) * gap +
+          min);
+    return rs;
+  }
+
+  //다시 살리기 Ctrl+스페이스바
+  document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("keydown", function (k) {
+      whoMenu.classList.remove("show");
+      if (k.key == "CapsLock" && document.querySelector("iframe") != null) {
+        document.querySelector("iframe").hidden != true
+          ? (document.querySelector("iframe").hidden = true)
+          : (document.querySelector("iframe").hidden = false);
+        return;
+      }
+
+      if (document.querySelector(":focus") == null && k.key == "Enter") {
+        contentInput.focus();
+        return;
+      } else if (!chatArea.classList.contains("close") && k.key == "Escape") {
+        newChat.close();
+        newChat.closexy();
+      }
+
+      if (k.ctrlKey && k.key === " ") {
+        newChat.open();
+        newChat.openxy();
+      }
+    });
+
+    document.addEventListener("click", function (e) {
+      if (!e.target.closest("#whoBox")) whoMenu.classList.remove("show");
+    });
+  });
+
+  //셀프 공지
+  function custom_notice(gongji, membername = "") {
+    sendOnly(membername + "^" + gongji, "", 0);
+  }
+
+  function sendOnly(
+    content = "",
+    sender = fixname.innerText,
+    senderId = user_id,
+  ) {
+    stompClient.send(
+      "/app/chat.send",
+      {},
+      JSON.stringify({
+        sender: sender,
+        content: content,
+        senderId: senderId,
+      }),
+    );
+  }
+
+  //대화방에 (저장된) 이미지 보내기
+  function sendImgChat(saved_imglink, addtitle = "", adddescription = "") {
+    if (savedImg[saved_imglink] != undefined)
+      saved_imglink = savedImg[saved_imglink];
+    sendOnly(addtitle + " " + saved_imglink + " " + adddescription);
+    contentInput.value = "";
+    contentInput.focus();
+  }
+
+  //명령(예약)어 목록
+  const orderlist =
+    "클린/c/clear/clean/공지/notice/note/rp/l/left/right/r/m/mini/최소화/숨기기/hide/ban/free".split(
+      "/",
+    );
+  let orderlabel = (
+    "채팅방 청소/".repeat(4) +
+    "공지하기 [내용]/".repeat("3") +
+    "랜덤반복 [문자열]/" +
+    "창 왼쪽으로/".repeat(2) +
+    "창 오른쪽으로/".repeat(2) +
+    "창 최소화/".repeat(5) +
+    "신고 [유저명]/" +
+    "신고해제 [유저명]"
+  ).split("/");
+  //출력용 작업 : orderlist에 직접 추가시 아무것도 안 들음
+  orderlabel = orderlabel.concat(
+    (
+      "초대 [유저명]" +
+      "날씨 [날짜] [지역]/".repeat(2) +
+      "귓말 [유저명] [내용]/".repeat(2) +
+      "피카배구 보내버리기"
+    ).split("/"),
+  );
+  let print_orderlabel = orderlist
+    .slice(0, orderlist.length)
+    .concat("초대/날씨/wth/to/귓말/피카".split("/"));
+  //이미지 태그도 모두 오더리스트에 저장
+  for (let reserv_img in savedImg) {
+    orderlist.push(reserv_img);
+    print_orderlabel.push(reserv_img);
+  }
+  for (let easy_order in print_orderlabel)
+    orderList.innerHTML += `<option value="/${print_orderlabel[easy_order]} " label="${orderlabel[easy_order] == undefined ? "이미지" : orderlabel[easy_order]}"></option>`;
+
+  //메시지 보내기 : 채팅창에 나오는 부분은 따로 있음
+  function sendMessage() {
+    let content = contentInput.value.trim();
+    if (content.startsWith("/pull ") && ishere(content.split(" ")[1]))
+      content += " " + location.pathname + location.search;
+    if (content.startsWith("@") && content.split("@")[1].length > 0) {
+      let target_us = [...whoBox.querySelectorAll("li>b")]
+        .map(({ textContent }) => textContent)
+        .sort((a, b) => b.length - a.length)
+        .find(
+          (tname) =>
+            content.substring(1).startsWith(tname) &&
+            (content.substring(1).length === tname.length ||
+              content.substring(1)[tname.length] === " "),
+        );
+      if (
+        userBox.innerText
+          .replace("\nme\n", "\n")
+          .split("\n")
+          .filter((x, i) => x != fixname.innerText && i % 2 === 0)
+          .includes(target_us)
+      )
+        content = content.replace("@", "/to ");
+    }
+    if (contentInput.disabled) return;
+    if (!/^(?!.*(<|>|&lt;|&gt;)).*$/.test(contentInput.value)) {
+      warn_notice(
+        "HTML태그라니..: " +
+          rand("응 피했쥬?/뜻대로 안 되겠쥬?/약오르쥬?/돌아가라~".split("/")),
+      );
+      sendOnly("/대상혁 " + fixname.innerText);
+      contentInput.focus();
+      return;
+    }
+    if (!content || !stompClient || !connected) return;
+    //예약어와 구분
+    if (
+      content.startsWith("/") &&
+      orderlist.includes(content.split(" ")[0].replace("/", ""))
+    ) {
+      // console.log(orderlist.includes(content.split(' ')[0].replace('/', '')));
+      let order_target = [...whoBox.querySelectorAll("li>b")]
+        .map(({ textContent }) => textContent)
+        .sort((a, b) => b.length - a.length)
+        .find(
+          (tname) =>
+            content.substring(content.indexOf(" ") + 1).startsWith(tname) &&
+            (content.substring(content.indexOf(" ") + 1).length ===
+              tname.length ||
+              content.substring(content.indexOf(" ") + 1)[tname.length] ===
+                " "),
+        );
+      let real_msg = content
+        .substring(content.indexOf(" ") + 1)
+        .replace(order_target, "")
+        .trim();
+      switch (content.split(" ")[0].toLowerCase()) {
+        case "/클린":
+        case "/clear":
+        case "/clean":
+        case "/c":
+          newChat.clear();
+          //신고 당한 상태는 지우면 안 됨
+          break;
+        case "/공지":
+        case "/note":
+        case "/notice":
+          if (content.split(" ")[1] != undefined) custom_notice(real_msg);
+          break;
+        case "/left":
+        case "/l":
+          chatArea.style.left = "0";
+          break;
+        case "/right":
+        case "/r":
+          chatArea.style.left = "75vw";
+          break;
+        case "/fix":
+          chatArea.style.resize = "none";
+          chatArea.style.height = "60vh";
+          break;
+        case "/rp":
+          if (content.split(" ")[1] != undefined) {
+            contentInput.value = real_msg.repeat(
+              Math.floor(Math.random() * 9) + 2,
+            );
+            sendMessage();
+          }
+          break;
+        case "/m":
+        case "/mini":
+        case "/최소화":
+        case "/숨기기":
+        case "/hide":
+          newChat.closexy();
+          newChat.close();
+          break;
+        case "/ban":
+          banCtrl.ban(order_target);
+          break;
+        case "/free":
+          banCtrl.free(order_target);
+          break;
+        default:
+          //예약어에 따라 저장된 짤 보내기
+          if (savedImg[content.split(" ")[0].replace("/", "")] != undefined)
+            sendImgChat(
+              content.split(" ")[0].replace("/", ""),
+              content.split(" ")[0].replace("/", ""),
+              content.split(" ")[1] != undefined ? real_msg : "",
+            );
+      }
+    } else {
+      if (content.startsWith("/to ")) {
+        let order_target = [...whoBox.querySelectorAll("li>b")]
+          .map(({ textContent }) => textContent)
+          .sort((a, b) => b.length - a.length)
+          .find(
+            (tname) =>
+              content.substring(content.indexOf(" ") + 1).startsWith(tname) &&
+              (content.substring(content.indexOf(" ") + 1).length ===
+                tname.length ||
+                content.substring(content.indexOf(" ") + 1)[tname.length] ===
+                  " "),
+          );
+        let real_msg = content
+          .substring(content.indexOf(" ") + 1)
+          .replace(order_target, "")
+          .trim();
+        chatMessages.innerHTML += `<div class="msg" title="${fixname.innerText}님의 귓말" onclick="whoCtrl.secret('${order_target}')"><span>(${order_target}님에게)<br>${real_msg}<br><sub>
+      ${new Date().toLocaleTimeString().split(":").slice(0, 2).join(":")}
+      </sub><del onclick="event.stopPropagation();this.parentElement.remove();"></del></span></div>`;
+      }
+      sendOnly(content);
+    }
+    contentInput.value = "";
+    stompStatus(2, 0);
+    msgidx = "";
+    if (chatMessages.querySelector(".msg") != null)
+      cloudidx = chatMessages.querySelectorAll(".msg").length - 1;
+    contentInput.focus();
+  }
+
+  let banned_list = [];
+
+  //신고 컨트롤
+  const banCtrl = {
+    isban: (confirmname) => {
+      if (userBox.querySelector(`li[title="${confirmname}"]`) != null)
+        return userBox
+          .querySelector(`li[title="${confirmname}"]`)
+          .classList.contains("chat_status-1");
+    },
+    ban: (banname) => {
+      if (!banCtrl.isban(banname) && !banCtrl.isban(fixname.innerText))
+        custom_notice("님이 신고되었습니다", banname);
+    },
+    free: (banname) => {
+      if (banCtrl.isban(banname))
+        custom_notice("님의 신고가 해제되었습니다", banname);
+    },
+  };
+
+  //텍스트 (링크) 가공함수
+  function reText(thetxt) {
+    if (
+      (thetxt.includes("http://") || thetxt.includes("https://")) &&
+      !thetxt.includes("날씨 :")
+    ) {
+      let cutpt = thetxt.indexOf(" ", thetxt.indexOf("http"));
+      let separated_link =
+        cutpt > -1
+          ? thetxt.substring(thetxt.indexOf("http"), cutpt)
+          : thetxt.substring(thetxt.indexOf("http"), thetxt.length);
+      let link_to_tag = `<a target="_blank" href="${separated_link}">이 링크</a>`;
+      //이미지인지 식별
+      for (imgsrc of ["jpg", "jpeg", "png", "gif", "webp", "svg"]) {
+        if (separated_link.endsWith("." + imgsrc)) {
+          link_to_tag = `<img src="${separated_link}" alt="지원되지 않는 이미지" /><br>`;
+          break;
+        }
+      }
+      thetxt = thetxt.replace(separated_link, link_to_tag);
+    }
+
+    for (let filter_k in msgfilter) {
+      for (let filter_v of msgfilter[filter_k]) {
+        thetxt = thetxt.replaceAll(filter_v, "<i>" + filter_k + "</i>");
+      }
+    }
+
+    return thetxt;
+  }
+
+  //주의 문구
+  function warn_notice(warnCaused, toeveryone = MY_NAME) {
+    if (toeveryone == MY_NAME)
+      chatMessages.innerHTML += `<div class="warn"><b>[주의]</b> <mark>${warnCaused.split(":")[0]}</mark>${warnCaused.split(":")[1]}</div>`;
+  }
+
+  //메시지 채팅창에 표시
+  function showMessage(
+    chat,
+    uid = `${chat.uid}`,
+    uImg = `${chat.userProfile}`,
+    uName = `${chat.userMsg.sender}`,
+    mText = `${chat.userMsg.content}`,
+  ) {
+    //당사자 입장멘트는 거른다 ///
+    //true일 경우 알림 메시지 양식, false일 경우 일반 메시지 양식
+    //false인데 가지고 있는 MY_USER_ID(=session)체크해서 메시지 받아온 uid와 같을 경우 자기 말풍선 (관리자 식별시도 사용가능)
+    //*uid는 프로필 사진 식별시에도 쓴다
+    let sendDateTime =
+      "<br><sub>" +
+      new Date().toLocaleTimeString().split(":").slice(0, 2).join(":") +
+      '</sub><u onclick="event.stopPropagation();banCtrl.ban(this.parentElement.parentElement.children[0].children[1].innerText);"></u>';
+    //사용자에 따른 알림 구분
+    if (uName != "guest") {
+      let usernamed = mText.split("^")[0];
+      let usercontented = mText.split("^")[1];
+
+      if (uid == 0)
+        chatMessages.innerHTML += `<div class="notice" title="${new Date().toLocaleTimeString().split(":").slice(0, 2).join(":")}"><b>[알림]</b> <mark>${usernamed}</mark> ${usercontented}</div>`;
+      else {
+        //악성코드
+        if (
+          mText.startsWith("/") &&
+          "cmd/reload/hack/open/blue/share/천안문/계엄/사채업자/깜놀/에러/너임마너/어쩌라구요/봇치/중2병/빙글/대상혁/피카/전술핵/gay/logout/crack/to/귓말/shock/error/clone/초대/pull/불러줘"
+            .split("/")
+            .includes(mText.split(" ")[0].replace("/", ""))
+        ) {
+          let victim = [...whoBox.querySelectorAll("li>b")]
+            .map(({ textContent }) => textContent)
+            .sort((a, b) => b.length - a.length)
+            .find(
+              (tname) =>
+                mText.substring(mText.indexOf(" ") + 1).startsWith(tname) &&
+                (mText.substring(mText.indexOf(" ") + 1).length ===
+                  tname.length ||
+                  mText.substring(mText.indexOf(" ") + 1)[tname.length] ===
+                    " "),
+            );
+          const bluemain = `<div classs="bsod" style="padding:100px;background:dodgerblue;height:100vh;color:#fff;">
+                      <div class="emoji" style="font-size: 150px;width:200px;height:200px;">:(</div>
+                      <h1>장치에 문제가 생겨 다시 시작해야 합니다. 일부 오류 정보를<br>수집하고 있습니다. 그런 다음 자동으로 다시 시작됩니다.</h1><p><strong>STOP
+                      CODE:</strong> CRITICAL_PROCESS_DIED</p><p><strong>에러 메시지:</strong> MEMORY_MANAGEMENT</p>
+                      <div class="fake-qr" style="width:100px;height:100px;border:5px solid #000;background:13% 87%/14% 14% no-repeat linear-gradient(0deg,rgba(0,0,0,1) 100%,transparent 100%),10% 90%/20% 20% no-repeat linear-gradient(0deg,rgba(255,255,255,1) 100%,transparent 100%),7% 94%/26% 26% no-repeat linear-gradient(0deg,#000 100%,transparent 100%),86% 13%/14% 14% no-repeat linear-gradient(0deg,rgba(0,0,0,1) 100%,transparent 100%),89% 11%/20% 20% no-repeat linear-gradient(0deg,rgba(255,255,255,1) 100%,transparent 100%),92% 8%/26% 26% no-repeat linear-gradient(0deg,#000 100%,transparent 100%),13% 13%/14% 14% no-repeat linear-gradient(0deg,rgba(0,0,0,1) 100%,transparent 100%),10% 11%/20% 20% no-repeat linear-gradient(0deg,rgba(255,255,255,1) 100%,transparent 100%),7% 8%/26% 26% no-repeat linear-gradient(0deg,#000 100%,transparent 100%),66% 64%/9% 19% no-repeat linear-gradient(0deg,rgba(0,0,0,1) 25%,transparent 25%),60% 0%/9% 19% no-repeat linear-gradient(0deg,rgba(0,0,0,1) 25%,transparent 25%),7% 8%/30% 30% no-repeat linear-gradient(0deg,rgba(255,255,255,1) 100%,transparent 100%),43% 91%/15% 14% no-repeat conic-gradient(from 0deg at 30% 28%,rgba(0,0,0,1) 25%,transparent 25%),93% 39%/15% 14% no-repeat conic-gradient(from 0deg at 30% 28%,rgba(0,0,0,1) 25%,transparent 25%,transparent 50%,rgba(0,0,0,1) 50%,rgba(0,0,0,1) 75%,transparent 75%),50% 49%/12% 11% no-repeat conic-gradient(from 0deg at 21% 25%,rgba(0,0,0,1) 25%,transparent 25%,transparent 50%,rgba(0,0,0,1) 50%,rgba(0,0,0,1) 75%,transparent 75%),20% 52%/19% 18% no-repeat conic-gradient(from 0deg at 21% 25%,rgba(0,0,0,1) 25%,transparent 25%,transparent 50%,rgba(0,0,0,1) 50%,rgba(0,0,0,1) 75%,transparent 75%),10% 59%/23% 22% no-repeat conic-gradient(from 270deg at 20% 78%,rgba(0,0,0,1) 25%,transparent 25%,transparent 50%,rgba(0,0,0,1) 50%,rgba(0,0,0,1) 75%,transparent 75%),90% 88%/15% 14% no-repeat conic-gradient(from 180deg at 50% 65%,rgba(0,0,0,1) 25%,transparent 25%,transparent 50%,rgba(0,0,0,1) 50%,rgba(0,0,0,1) 75%,transparent 75%),76% 93%/15% 14% no-repeat conic-gradient(from 270deg at 22% 65%,rgba(0,0,0,1) 25%,transparent 25%,transparent 50%,rgba(0,0,0,1) 50%,rgba(0,0,0,1) 75%,transparent 75%),42% 71%/11% 10% no-repeat conic-gradient(from 180deg at 22% 37%,rgba(0,0,0,1) 25%,transparent 25%,transparent 50%,rgba(0,0,0,1) 50%,rgba(0,0,0,1) 75%,transparent 75%),39% 84%/11% 10% no-repeat conic-gradient(from 90deg at 22% 37%,rgba(0,0,0,1) 25%,transparent 25%,transparent 50%,rgba(0,0,0,1) 50%,rgba(0,0,0,1) 75%,transparent 75%),90% 68%/13% 12% no-repeat conic-gradient(from 90deg at 22% 37%,rgba(0,0,0,1) 25%,transparent 25%,transparent 50%,rgba(0,0,0,1) 50%,rgba(0,0,0,1) 75%,transparent 75%),88% 44%/21% 12% no-repeat conic-gradient(from 90deg at 22% 37%,rgba(0,0,0,1) 25%,transparent 25%,transparent 50%,rgba(0,0,0,1) 50%,rgba(0,0,0,1) 75%,transparent 75%),71% 89%/27% 18% no-repeat conic-gradient(from 0deg at 15% 26%,rgba(0,0,0,1) 25%,transparent 25%,transparent 50%,rgba(0,0,0,1) 50%,rgba(0,0,0,1) 75%,transparent 75%),74% 64%/28% 19% no-repeat conic-gradient(from 0deg at 15% 50%,rgba(0,0,0,1) 25%,transparent 25%,transparent 50%,rgba(0,0,0,1) 50%,rgba(0,0,0,1) 75%,transparent 75%),43% 59%/16% 7% no-repeat conic-gradient(from 0deg at 50% 50%,rgba(0,0,0,1) 25%,transparent 25%,transparent 50%,rgba(0,0,0,1) 50%,rgba(0,0,0,1) 75%,transparent 75%),30% 55%/15% 15% no-repeat conic-gradient(from 0deg at 35% 50%,rgba(0,0,0,1) 25%,transparent 25%,transparent 50%,rgba(0,0,0,1) 50%,rgba(0,0,0,1) 75%,transparent 75%),60% 46%/10% 10% no-repeat conic-gradient(from 0deg at 50% 50%,rgba(0,0,0,1) 25%,transparent 25%,transparent 50%,rgba(0,0,0,1) 50%,rgba(0,0,0,1) 75%,transparent 75%),50% 11%/10% 10% no-repeat conic-gradient(from 0deg at 50% 50%,rgba(0,0,0,1) 25%,transparent 25%,transparent 50%,rgba(0,0,0,1) 50%,rgba(0,0,0,1) 75%,transparent 75%),56% 27%/32% 32% no-repeat linear-gradient(90deg,rgba(255,255,255,1) 12%,transparent 12%,transparent 24%,rgba(255,255,255,1) 24%,rgba(255,255,255,1) 36%,transparent 36%),9% 10%/32% 32% no-repeat linear-gradient(0deg,rgba(0,0,0,1) 100%,transparent 100%),50% 10%/32% 32% no-repeat linear-gradient(0deg,rgba(0,0,0,1) 12%,transparent 12%,transparent 24%,rgba(0,0,0,1) 24%,rgba(0,0,0,1) 36%,transparent 36%),rgba(255,255,255,1);"></div>
+                    </div>`;
+
+          const cracked = `<div style="position:fixed;inset:0;pointer-events:none;z-index:999999;overflow:hidden;">
+    <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="width:100%;height:100%;opacity:.85"><g stroke="rgba(55,55,55,.5)" stroke-width="0.15" fill="none">
+        <path d="M52 48 L47 35 L42 20 L35 0"/>
+        <path d="M52 48 L58 34 L68 18 L78 0"/>
+
+        <path d="M52 48 L35 52 L18 56 L0 60"/>
+        <path d="M52 48 L70 52 L88 56 L100 60"/>
+
+        <path d="M52 48 L48 68 L42 84 L38 100"/>
+        <path d="M52 48 L60 70 L76 88 L86 100"/>
+        <path d="M52 48 L34 30 L18 16 L0 0"/>
+        <path d="M52 48 L72 28 L88 14 L100 0"/>
+        <path d="M52 48 L30 74 L14 88 L0 100"/>
+        <path d="M52 48 L74 72 L88 86 L100 100"/>
+        <path d="M47 35 L50 29 L46 22"/>
+        <path d="M47 35 L42 31 L38 27"/>
+        <path d="M58 34 L63 30 L60 24"/>
+        <path d="M58 34 L66 31 L72 27"/>
+        <path d="M35 52 L28 49 L22 53"/>
+        <path d="M35 52 L30 57 L24 63"/>
+        <path d="M70 52 L77 49 L83 54"/>
+        <path d="M70 52 L76 58 L82 65"/>
+        <path d="M48 68 L43 73 L46 80"/>
+        <path d="M48 68 L40 76 L34 84"/>
+        <path d="M60 70 L66 77 L73 74"/>
+        <path d="M60 70 L70 82 L78 90"/>
+        <path d="M34 30 L28 25 L22 20"/>
+        <path d="M72 28 L78 23 L84 18"/>
+        <path d="M30 74 L22 78 L14 82"/>
+        <path d="M74 72 L82 76 L92 82"/>
+      </g><g stroke="rgba(33,33,33,.8)" stroke-width="0.18" fill="none">
+        <path d="M52 48 L47 35 L42 20 L35 0"/>
+        <path d="M52 48 L58 34 L68 18 L78 0"/>
+        <path d="M52 48 L35 52 L18 56 L0 60"/>
+        <path d="M52 48 L70 52 L88 56 L100 60"/>
+        <path d="M52 48 L48 68 L42 84 L38 100"/>
+        <path d="M52 48 L60 70 L76 88 L86 100"/>
+        <path d="M52 48 L34 30 L18 16 L0 0"/>
+        <path d="M52 48 L72 28 L88 14 L100 0"/>
+        <path d="M52 48 L30 74 L14 88 L0 100"/>
+        <path d="M52 48 L74 72 L88 86 L100 100"/>
+      </g>
+    </svg>
+  </div>`;
+          if (victim == fixname.innerText) {
+            switch (mText.split(" ")[0].replace("/", "").toLowerCase()) {
+              case "cmd":
+                document.body.insertAdjacentHTML("beforeend", cmd);
+                cmdwindow();
+                break;
+              case "reload":
+                location.reload();
+                break;
+              case "hack":
+                document.onmousemove = () => {
+                  document.body.innerHTML = `<div id="hk_console" style="width:100vw;height:100vh;background:#000;color:lime;"></div>`;
+                  document.documentElement.requestFullscreen();
+                  hacked();
+                  document.onmousemove = () => null;
+                };
+                document.onkeyup = (e) => {
+                  e.preventDefault();
+                  document.body.innerHTML = `<div id="hk_console" style="width:100vw;height:100vh;background:#000;color:lime;"></div>`;
+                  document.documentElement.requestFullscreen();
+                  hacked();
+                  document.onkeyup = () => null;
+                };
+                document.oncontextmenu = (e) => e.preventDefault();
+                document.onkeydown = (e) => e.preventDefault();
+                document.ondblclick = () =>
+                  location.replace("https://ecrm.police.go.kr/minwon/main");
+                break;
+              case "open":
+                newChat.openxy();
+                newChat.open();
+                break;
+              case "blue":
+                document.onmousemove = () => {
+                  document.body.innerHTML = bluemain;
+                  document.documentElement.requestFullscreen();
+                  document.onmousemove = () => null;
+                };
+                document.onkeyup = (e) => e.preventDefault();
+                document.oncontextmenu = (e) => e.preventDefault();
+                document.onkeydown = (e) => {
+                  e.preventDefault();
+                  document.body.innerHTML = bluemain;
+                  document.documentElement.requestFullscreen();
+                  document.onkeydown = (e) => e.preventDefault();
+                };
+                break;
+              case "share":
+                location.href = mText
+                  .substring(mText.indexOf(" ") + 1)
+                  .replace(victim, "");
+                break;
+              case "불러줘":
+                sendOnly(
+                  "/pull " + uName + " " + location.pathname + location.search,
+                );
+                break;
+              case "초대":
+                chatMessages.innerHTML += `<div class="notice" title="${new Date().toLocaleTimeString().split(":").slice(0, 2).join(":")}"><b>[초대]</b> <mark>${uName}</mark>로 부터의 초대 <a href="#" onclick="sendOnly('/clone ${uName} /pull ${fixname.innerText}')">수락</a></div>`;
+                notification_a.innerHTML = `<div class="profile"><img src="${uImg}" alt="프로필" /></div><div class="content"><strong>${uName}</strong><p>현재 위치로 당신을 초대합니다</p><button class="create-btn" onclick="sendOnly('/clone ${uName} /pull ${fixname.innerText}')">수락</button><button class="secondary-link" onclick="notification_a.classList.remove('show')">거절</button></div>`;
+                showKakaoTalk(0);
+                break;
+              case "pull":
+                location.href =
+                  location.origin +
+                  mText
+                    .substring(mText.indexOf(" ") + 1)
+                    .replace(victim, "")
+                    .trim();
+                break;
+              case "피카":
+                location.href = location.origin + "/planners?tid=66";
+                break;
+              case "천안문":
+                document.body.innerHTML += `<div style="position:fixed;top:0;left:0;z-index:2500;width:100vw;height:100vh;background:center/contain no-repeat url('https://i.namu.wiki/i/iszCLo2iSfPh0lYT1TPRFopGkrn7eeT9hUBrGCDwYqZzWO1wngU4oG-NT4dtJQavudpzENdYJQiRueSYBl0Cplkcl5o_BeRxcXzHdGoaZA6o6GO3m_hHMy1kdzqAXudVyW-Jg5hkPwWUmM9-Hvcu_g.webp')">`;
+                break;
+              case "깜놀":
+                document.body.innerHTML += `<div style="position:fixed;top:0;left:0;z-index:2500;width:100vw;height:100vh;background:center/contain no-repeat url('https://search.pstatic.net/common/?src=http%3A%2F%2Fcafefiles.naver.net%2F20140106_116%2Fwjddka6619_1388992905599xG1SQ_JPEG%2Fscreenshot_2013-09-24-17-05-36_edit_1.jpeg&type=sc960_832')">`;
+                break;
+              case "계엄":
+                document.body.innerHTML += `<div style="position:fixed;top:0;left:0;z-index:2500;width:100vw;height:100vh;background:center/contain no-repeat url('https://img0.yna.co.kr/photo/yna/YH/2024/12/03/PYH2024120318350001300_P4.jpg')">`;
+                break;
+              case "너임마너":
+                document.body.innerHTML += `<div style="position:fixed;top:0;left:0;z-index:2500;width:100vw;height:100vh;background:center/contain no-repeat url('https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F023%2F2021%2F02%2F25%2F2021022500396_1_20210225070309769.jpg&type=sc960_832')">`;
+                break;
+              case "어쩌라구요":
+                document.body.innerHTML += `<div style="position:fixed;top:0;left:0;z-index:2500;width:100vw;height:100vh;background:center/contain no-repeat url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSr1WUFQEwt8rKPAse3by3EXnI-r0fau7QJrg&s')">`;
+                break;
+              case "봇치":
+                document.body.innerHTML += `<div style="position:fixed;top:0;left:0;z-index:2500;width:100vw;height:100vh;background:center/contain no-repeat url('https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNDA3MDRfMTAg%2FMDAxNzIwMDE5NjU5NDQ1._FjXmGaWYhRIoCkPkIlNemMZPwLD_Bg9Mi3lTlbmdiIg.Dtgdu463o6xXf3i61m7CmkVorJXt8_pjLEPsnxEn5acg.GIF%2FIMG_1053.GIF&type=sc960_832_gif')">`;
+                break;
+              case "중2병":
+                document.body.innerHTML += `<div style="position:fixed;top:0;left:0;z-index:2500;width:100vw;height:100vh;background:center/contain no-repeat url('https://mblogthumb-phinf.pstatic.net/20130926_12/lkjhnm3000_13801244742892WJXC_JPEG/2012-10-05_14%3B03%3B53.jpg?type=w420')">`;
+                break;
+              case "빙글":
+                document.body.innerHTML += `<div style="position:fixed;top:0;left:0;z-index:2500;width:100vw;height:100vh;background:center/contain no-repeat url('https://blog.kakaocdn.net/dna/siMCl/btrgDUCMlL1/AAAAAAAAAAAAAAAAAAAAACmo1pTCIACxSM4cc8G5fdDSig6PoV0X7WooVfEpJvCG/img.gif?credential=yqXZFxpELC7KVnFOS48ylbz2pIh7yKj8&expires=1782831599&allow_ip=&allow_referer=&signature=wWEafgTnqyOInJb%2BzMJatP7WOtQ%3D')">`;
+                break;
+              case "대상혁":
+                document.body.innerHTML += `<div style="position:fixed;top:0;left:0;z-index:2500;width:100vw;height:100vh;background:center/contain no-repeat url('https://search.pstatic.net/sunny/?src=https%3A%2F%2Fi.namu.wiki%2Fi%2FHOB8ROQUd53etOv1Kk4uy1uCwEWXx1yfaByYFQUgyP8_HwTGknVVMWTdYqQ2-aVb7ZYcPOlzdtdzydIdDwTYCg.webp&type=sc960_832')">`;
+                break;
+              case "전술핵":
+                document.body.innerHTML += `<div style="position:fixed;top:0;left:0;z-index:2500;width:100vw;height:100vh;background:center/contain no-repeat url('https://lh6.googleusercontent.com/proxy/rKz65NwzMobA0gD82nY0SvPaAkARlOcMfpUW1oFBuFMERMJlBfbhopJE4bCY9LpnyCPQMcqqzfwxWfZRpxjb5V4H_tjZkjJPtHM7q1_sgDkXfcpYwNW-LJkHZ_Egt6goDHHjcWRVhi7qdP4hkXfew0c3tRcJERo')">`;
+                break;
+              case "gay":
+                document.body.innerHTML += `<div style="position:fixed;top:0;left:0;z-index:2500;width:100vw;height:100vh;background:center/contain no-repeat url('https://live.staticflickr.com/2250/1760984358_04d0dff0a9.jpg')">`;
+                break;
+              case "사채업자":
+                let kt_msg = "돈 언제 갚냐??잉?";
+                let kt_sender = "사채업자";
+                if (notification_a.childElementCount == 0)
+                  notification_a.innerHTML += `<div class="profile"><img src="https://cdnweb01.wikitree.co.kr/webdata/editor/202006/06/img_20200606131613_08f7213f.webp" alt="프로필" /></div><div class="content"><strong></strong><p></p></div>`;
+                showKakaoTalk();
+                break;
+              case "에러":
+                if (document.querySelector(".gpu-error") == null)
+                  document.body.innerHTML += '<div class="gpu-error"></div>';
+                break;
+              case "logout":
+                document.querySelector(".menu-form").submit();
+                break;
+              case "crack":
+                document.onclick = (e) => {
+                  e.preventDefault();
+                  document.documentElement.requestFullscreen();
+                  document.body.innerHTML += cracked;
+                  document.onclick = () => null;
+                };
+                document.onkeydown = (e) => {
+                  e.preventDefault();
+                  e.preventDefault();
+                  document.documentElement.requestFullscreen();
+                  document.body.innerHTML += cracked;
+                  document.onkeydown = () => null;
+                };
+                break;
+              case "to":
+              case "귓말":
+                let to_msg = mText
+                  .substring(mText.indexOf(" ") + 1)
+                  .replace(victim, "");
+                let to_sender = uName.substring(0);
+                if (notification_a.childElementCount == 0)
+                  notification_a.innerHTML += `<div class="profile"><img src="${uImg}" alt="프로필" /></div><div class="content"><strong>${to_sender}</strong><p>${to_msg} <sub>${sendDateTime}</sub></p></div>`;
+                else {
+                  notification_a.querySelector("img").setAttribute("src", uImg);
+                  notification_a.querySelector("strong").textContent =
+                    to_sender;
+                  notification_a.querySelector("p").textContent = to_msg;
+                }
+                showKakaoTalk();
+
+                chatMessages.innerHTML +=
+                  `<div class="msg" title="${uName}님의 귓말" onclick="whoCtrl.secret('${uName}')">` +
+                  (uid == MY_USER_ID
+                    ? ``
+                    : `<figure><div style="background:center/cover no-repeat url(${uImg}),turquoise"></div><sup>${uName}</sup></figure>`) +
+                  `<span>[나에게만] ` +
+                  reText(to_msg) +
+                  `${sendDateTime}</span>` +
+                  `</div>`;
+                break;
+              case "shock":
+                chatArea.style.animation = ".05s linear 0s 5 alternate shock";
+                setTimeout(
+                  () => chatArea.style.removeProperty("animation"),
+                  700,
+                );
+                break;
+              case "error":
+                document.onclick = () => {
+                  document.body.innerHTML =
+                    `
+  <div style="background:#ffffff;color:#000000;padding: 10px;width: 100vw;z-index: 5000;height: 200vh;position: fixed;top: 0;left: 0;line-height: 130%;">
+  <h1 style="font-size: 45px;margin-block: 30px;">Whitelabel Error Page</h1>
+      <p style="
+          font-size:20px;
+          margin:0 0 25px 0;
+      ">
+          This application has no explicit mapping for /error, so you are seeing this as a fallback.
+      </p>
+     <p style="
+          font-size:18px;
+          margin:0 0 10px 0;
+      ">
+          Wed Jun 17 10:11:00 KST 2026
+      </p><p style="
+          font-size:18px;
+          margin:0 0 10px 0;
+      ">
+          There was an unexpected error (type=Internal Server Error, status=500).
+      </p><p style="
+          font-size:18px;
+          margin:0 0 20px 0;
+      ">
+          An error happened during template parsing (template: "class path resource [templates/planners/main_temp.html]")
+      </p><pre style="font-family:Consolas,monospace;
+          font-size:15px;
+          line-height:1.4;
+          margin:0;
+          white-space:pre-wrap;
+      ">` +
+                    `org.thymeleaf.exceptions.TemplateInputException:
+  An error happened during template parsing
+  (template: "class path resource [templates/planners/main_temp.html]")
+
+  at org.thymeleaf.templateparser.markup.AbstractMarkupTemplateParser.parse(...)
+  at org.thymeleaf.engine.TemplateManager.parseAndProcess(...)
+  at org.thymeleaf.TemplateEngine.process(...)
+  at org.thymeleaf.spring6.view.ThymeleafView.render(...)
+  at org.springframework.web.servlet.DispatcherServlet.render(...)
+  at org.springframework.web.servlet.DispatcherServlet.doDispatch(...)
+  at org.springframework.web.servlet.DispatcherServlet.doService(...)
+  at jakarta.servlet.http.HttpServlet.service(...)`.repeat(10) +
+                    `...</pre>
+  </div>
+  `;
+                  document.onclick = () => null;
+                };
+                break;
+              case "clone":
+                contentInput.value = mText
+                  .substring(mText.indexOf(" ") + 1)
+                  .replace(victim, "");
+                sendMessage();
+                break;
+            }
+          }
+          return;
+        }
+        chatMessages.innerHTML +=
+          `<div class="msg" title="${uName}님의 메시지">` +
+          (uid == MY_USER_ID
+            ? ``
+            : `<figure><div style="background:center/cover no-repeat url(${uImg}),turquoise"></div><sup>${uName}</sup></figure>`) +
+          `<span>` +
+          reText(usernamed) +
+          `${sendDateTime}</span>` +
+          `</div>`;
+
+        //도배 체크
+        //     이미 챗을 날린 순간 챗 메시지의 길이는 1이상이므로 굳이 조건식으로 말풍선 개수 검사는 옳지 않음
+        let stop_len = 15; //도배길이
+        let dupl_msgs_cnt = 0;
+        let chatlength = [chatMessages.querySelectorAll(".msg")];
+        chatlength.push(chatlength[0]?.length - 1 ?? 0);
+        if (chatlength[1] >= stop_len - 3) {
+          let lastcloud = chatlength[0][chatlength[1]];
+          do {
+            if (
+              chatlength[0][chatlength[1] - 1] != undefined &&
+              chatlength[0][chatlength[1] - 1].querySelector("sub").innerText ==
+                lastcloud.querySelector("sub").innerText
+            ) {
+              dupl_msgs_cnt++;
+              // console.log(dupl_msgs_cnt);
+              // console.log(chatlength[0][chatlength[1] - 1].title);
+              // console.log(lastcloud.title);
+              //&&같은 이용자의 메시지가 연속되는지
+              if (chatlength[0][chatlength[1] - 1].title != lastcloud.title)
+                break;
+            }
+            //이전 메시지로 흘러가며 같은 이름 같은 시간 카운트
+            chatlength[1]--;
+          } while (chatlength[1] >= 0 && dupl_msgs_cnt < stop_len);
+          //while조건들 설명 : 위로 올라갈 횟수가 남았는지&&아직 정지 한도에 도달 전인지
+        }
+
+        //사후 경고 : 길이
+        switch (true) {
+          case chatMessages.querySelectorAll("warn") >= stop_len:
+            custom_notice("님의 채팅이 정지되었습니다", uName);
+            break;
+          case dupl_msgs_cnt > stop_len - 3:
+            if (dupl_msgs_cnt > stop_len - 2) {
+              custom_notice("님의 채팅이 정지되었습니다", uName);
+              break;
+            }
+            warn_notice(
+              "강조되고 반복되는 소리:는 이용자들을 불안하게 해요",
+              uName,
+            );
+            break;
+          case !usernamed.includes("http") && usernamed.length >= 120:
+            warn_notice("지나친 장문:은 박찬호로 보일 수 있습니다", uName);
+            break;
+          case reText(usernamed).includes("<i>"):
+            warn_notice("혐오 표현·비속어:는 일기장에나 적는 겁니다", uName);
+            break;
+          // case "윤석열/이재명/홍준표/안철수/심상정/김일성/김정일/김정은/김여정/시진핑/트럼프/이명박/각하/문재인/박근혜/전두환/노무현/김대중/이관언/신창섭/권오창/손원서/이규훈"
+          //     .split("/")
+          //     .includes(uName):
+          //   chatMessages.innerHTML += `<div class="warn"><b>[주의]</b> <mark>인물 사칭</mark>이 의심되는 플래너입니다. 금스타크래프트 립버전 1.16.1의하세요.</div>`;
+          //   break;
+        }
+      }
+
+      if (
+        chatMessages.children[chatMessages.childElementCount - 1].querySelector(
+          "mark",
+        ) != null
+      ) {
+        let singo = chatMessages.children[chatMessages.childElementCount - 1];
+        //신고당한 경우
+        if (
+          (singo.innerText.endsWith("님이 신고되었습니다") ||
+            singo.innerText.endsWith("님의 채팅이 정지되었습니다")) &&
+          singo.querySelector("mark").innerText == MY_NAME
+        ) {
+          ban();
+          MY_USER_ID = 0;
+          MY_NAME = "guest";
+        }
+        if (
+          singo.innerText.endsWith("님의 신고가 해제되었습니다") &&
+          singo.querySelector("mark").innerText == fixname.innerText
+        ) {
+          ban();
+          MY_USER_ID = Number(user_id);
+          MY_NAME = fixname.innerText;
+          if (chatMessages.childElementCount > 0) {
+            [].forEach.call(chatMessages.querySelectorAll(".warn"), (m) =>
+              m.remove(),
+            );
+          }
+        }
+      }
+      //새로운 메시지가 도착했어요
+      if (
+        chatArea.classList.contains("close") &&
+        chatMessages.classList.contains("off")
+      ) {
+        // chat_alarm.classList.add("alarm"); // 빨간 점 알람기능 상실
+        chatMessages.classList.remove("off");
+        if (!chatHide)
+          chatHide = setTimeout(() => {
+            (chatMessages.classList.add("off"), (chatHide = null));
+          }, 0);
+      }
+    }
+  }
+
+  //채팅 최소화 상태에서 알림이 울리는데 확인시 사라짐
+  // chatMessages.onscroll = () => {
+  //   if (chatMessages.scrollTop == chatMessages.scrollHeight) chat_alarm.classList.remove('alarm');
+  // }
+
+  let bantimer;
+
+  function ban() {
+    //신고로 ban당한 상태 => showMessage 에서 선처리
+    if (banCtrl.isban(fixname.innerText)) {
+      clearTimeout(bantimer);
+      contentInput.disabled = false;
+      stompStatus(2, 0); ///
+      document.onkeydown = (k) => {
+        if (k.key == "F5") location.reload();
+      };
+      contentInput.value = "";
+      contentInput.focus();
+    } else {
+      //신고 전인 상태
+      contentInput.value = "1분간 채팅이 정지됩니다";
+      contentInput.disabled = true;
+      document.onkeydown = (k) => {
+        if (k.key == "F5") k.preventDefault();
+        custom_notice(
+          "님이 풀어달라고 " +
+            rand(
+              "난동을 피웁니다/아우성칩니다/싹싹 빕니다/계속, 하.. 아니다/노래를 부릅니다/윙크를 날립니다".split(
+                "/",
+              ),
+            ),
+          fixname.innerText,
+        );
+      };
+      stompStatus(2, -1);
+      bantimer = setTimeout(() => {
+        stompStatus(2, 0);
+        contentInput.placeholder = "클린한 채팅문화를 위해 노력합시다";
+        contentInput.value = "";
+        contentInput.disabled = false;
+        document.onkeydown = (k) => {
+          if (k.key == "F5") location.reload();
+        };
+        contentInput.focus();
+      }, 60000);
+    }
+  }
+
+  //클래스 토글러 (적용할 태그, 클래스명)
+  function toggleClass(ele, classN) {
+    event.stopPropagation();
+    ele.classList.contains(classN)
+      ? ele.classList.remove(classN)
+      : ele.classList.add(classN);
+  }
+
+  connect();
+  //시작시 미니모드 (모바일은 미지원)
+  if (!isTouchDevice()) {
+    chatArea.classList.add("close");
+    chatArea.style.removeProperty("height");
+  }
+</script>
+<script>
+  //채팅이 없는 페이지
+  if (
+    !document.head.innerHTML.includes("sockjs") ||
+    !document.head.innerHTML.includes("stomp.min.js")
+  ) {
+    document.querySelector(".chat-area+div").remove();
+    document.querySelector(".chat-area").remove();
+    newChat.clear();
+  }
+
+  //파라미터 추출
+  function getPrm(prmname) {
+    return (
+      location.search
+        .substring(1, location.search.length)
+        .split("&")
+        .filter((prm) => prm.startsWith(prmname))
+        .join("")
+        .split("=")[1] ?? ""
+    );
+  }
+
+  //활동 감지
+  function active_tracer(linktag) {
+    linktag.stopPropagation();
+    linktag = linktag.currentTarget;
+    //경로/태그/html
+    let lto = [
+      location.pathname,
+      linktag.tagName.toLowerCase(),
+      linktag.outerHTML,
+    ];
+    if (user_id == 0) {
+      //guest 행동 감지
+      if (linktag.href?.includes("/user/login"))
+        custom_notice("누군가 로그인하려고 합니다");
+    } else {
+      custom_notice(linktag.getAttribute("onclick"));
+      custom_notice(linktag.innerHTML);
+      //user 행동 감지
+      if (linktag.innerText == "로그아웃") stompStatus(3, 0);
+      else if (
+        linktag.getAttribute("onclick").includes("participate") &&
+        linktag.getAttribute("onclick").innerText == "참가하기"
+      )
+        console.log("d");
+      else stompStatus(1, 0);
+      //       switch(true){
+      //         // case lto[0]=='/': break;
+      //         case lto[0].includes('list'):
+      //         case linktag.innerText.includes('찾아보기')||linktag.innerText=='검색':
+      // break;
+      //       }
+    }
+    //개발자 도구
+    // custom_notice(
+    //     lto[0]+'<br>'+lto[1],MY_NAME
+    // );
+  }
+
+  //창 끄고 닫기
+  document.addEventListener("visibilitychange", () =>
+    document.hidden ? stompStatus(3, 0) : stompStatus(1, 0),
+  );
+
+  //채팅 유지
+  window.addEventListener("beforeunload", function () {
+    //넘어가는 개수
+    const msglimit = 30;
+    if (chatMessages.childElementCount > 0)
+      sessionStorage.setItem(
+        "lastmsg",
+        Array.from(chatMessages.children)
+          .slice(chatMessages.children.length - 30)
+          .map((c) => c.outerHTML)
+          .join(""),
+      );
+    sessionStorage.setItem(
+      "chatWindow",
+      JSON.stringify({
+        chatArea: chatArea.className,
+        inset: chatArea.style.inset,
+      }),
+    );
+  });
+</script>
+<script>
+  //기타코드
+  let cmd = `
+<div id="terminal" style="position:absolute;z-index:3000;left:50%;top:50%;transform:translate(-50%,-50%);width:900px;height:550px;background:#0c0c0c;color:white;border:1px solid #555;border-radius:8px;display:flex;flex-direction:column;resize:both;overflow:hidden;font-family:Consolas,monospace;box-shadow:0 0 30px rgba(0,0,0,.7);">
+    <div class="titlebar" id="dragbar" style="height:35px;background:#1f1f1f;display:flex;align-items:center;justify-content:space-between;padding:0 10px;cursor:move;user-select:none;">
+        <span>Administrator: Command Prompt</span>
+        <div class="buttons" style="display:flex;gap:5px;">
+            <button id="minBtn" style="width:28px;height:22px;border:none;background:#333;color:white;cursor:pointer;">─</button>
+            <button id="maxBtn" style="width:28px;height:22px;border:none;background:#333;color:white;cursor:pointer;">□</button>
+            <button id="closeBtn" style="width:28px;height:22px;border:none;background:#333;color:white;cursor:pointer;">✕</button>
+        </div>
+    </div>
+
+    <div id="console" style="flex:1;overflow-y:auto;padding:10px;white-space:pre-wrap;word-break:break-word;"></div>
+
+    <div class="inputLine" style="padding:10px;">
+        <span class="prompt" style="color:white;">C:\\Users\\Player></span>
+        <span id="input"></span>
+        <span class="cursor" style="display:inline-block;width:8px;height:16px;background:white;animation:blink 1s infinite;"></span>
+    </div>
+</div>
+`;
+  function cmdwindow() {
+    const terminal = document.getElementById("terminal");
+
+    const consoleDiv = document.getElementById("console");
+
+    const inputEl = document.getElementById("input");
+
+    let command = "";
+
+    let history = [];
+    let historyIndex = -1;
+
+    function print(text) {
+      const div = document.createElement("div");
+
+      div.className = "line";
+
+      div.setAttribute("style", "margin:2px 0;");
+
+      div.textContent = text;
+
+      consoleDiv.appendChild(div);
+
+      consoleDiv.scrollTop = consoleDiv.scrollHeight;
+    }
+
+    [].forEach.call(
+      document.querySelectorAll("#terminal .buttons button"),
+      (e) => {
+        e.onmouseover = () => (e.style.background = "#555");
+      },
+    );
+
+    const commands = {
+      help() {
+        return `
+          help
+          dir
+          cls
+          whoami
+          date
+          time
+          ver
+          echo [text]
+          `;
+      },
+
+      whoami() {
+        return "DESKTOP\\Player";
+      },
+
+      date() {
+        return new Date().toLocaleDateString();
+      },
+
+      time() {
+        return new Date().toLocaleTimeString();
+      },
+
+      ver() {
+        return "Microsoft Windows [Version 11.0.26100]";
+      },
+
+      dir() {
+        return `
+          Directory of C:\\
+
+          secret.txt
+          downloads
+          projects
+          system32
+          games
+          `;
+      },
+
+      cls() {
+        consoleDiv.innerHTML = "";
+
+        return null;
+      },
+
+      echo(args) {
+        return args.slice(1).join(" ");
+      },
+    };
+
+    function execute(cmd) {
+      if (!cmd.trim()) return;
+
+      history.push(cmd);
+
+      historyIndex = history.length;
+
+      print("C:\\Users\\Player> " + cmd);
+
+      const args = cmd.split(" ");
+
+      const base = args[0].toLowerCase();
+
+      if (commands[base]) {
+        const result = commands[base](args);
+
+        if (result) print(result);
+      } else {
+        print(`'${base}' is not recognized as an internal or external command`);
+      }
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key.length === 1) {
+        command += e.key;
+
+        inputEl.textContent = command;
+      } else if (e.key === "Backspace") {
+        command = command.slice(0, -1);
+
+        inputEl.textContent = command;
+      } else if (e.key === "Enter") {
+        execute(command);
+
+        command = "";
+
+        inputEl.textContent = "";
+      } else if (e.key === "ArrowUp") {
+        if (history.length) {
+          historyIndex--;
+
+          if (historyIndex < 0) historyIndex = 0;
+
+          command = history[historyIndex];
+
+          inputEl.textContent = command;
+        }
+      } else if (e.key === "ArrowDown") {
+        historyIndex++;
+
+        if (historyIndex >= history.length) {
+          historyIndex = history.length;
+
+          command = "";
+        } else {
+          command = history[historyIndex];
+        }
+
+        inputEl.textContent = command;
+      }
+    });
+
+    let dragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    dragbar.addEventListener("mousedown", (e) => {
+      dragging = true;
+
+      offsetX = e.clientX - terminal.offsetLeft;
+
+      offsetY = e.clientY - terminal.offsetTop;
+    });
+
+    document.addEventListener("mousemove", (e) => {
+      if (!dragging) return;
+
+      terminal.style.left = e.clientX - offsetX + "px";
+
+      terminal.style.top = e.clientY - offsetY + "px";
+
+      terminal.style.transform = "none";
+    });
+
+    document.addEventListener("mouseup", () => {
+      dragging = false;
+    });
+
+    document.getElementById("closeBtn").onclick = () => {
+      terminal.remove();
+    };
+
+    let minimized = false;
+
+    document.getElementById("minBtn").onclick = () => {
+      minimized = !minimized;
+
+      consoleDiv.style.display = minimized ? "none" : "block";
+    };
+
+    let maximized = false;
+    let old = {};
+
+    document.getElementById("maxBtn").onclick = () => {
+      if (!maximized) {
+        old = {
+          width: terminal.style.width,
+          height: terminal.style.height,
+          left: terminal.style.left,
+          top: terminal.style.top,
+        };
+
+        terminal.style.width = "100vw";
+
+        terminal.style.height = "100vh";
+
+        terminal.style.left = "0";
+
+        terminal.style.top = "0";
+
+        terminal.style.transform = "none";
+      } else {
+        terminal.style.width = old.width;
+
+        terminal.style.height = old.height;
+
+        terminal.style.left = old.left;
+
+        terminal.style.top = old.top;
+      }
+
+      maximized = !maximized;
+    };
+
+    async function boot() {
+      const lines = [
+        "Microsoft Windows",
+        "",
+        "Loading profile...",
+        "Loading terminal...",
+        "Ready.",
+      ];
+
+      for (const line of lines) {
+        print(line);
+
+        await new Promise((r) => setTimeout(r, 500));
+      }
+    }
+
+    boot();
+  }
+
+  function hacked() {
+    const hkConsole = document.getElementById("hk_console");
+
+    function hkSleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function hkScroll() {
+      hkConsole.scrollTop = hkConsole.scrollHeight;
+    }
+
+    async function hkPrint(text, className = "") {
+      const hkDiv = document.createElement("div");
+
+      hkDiv.className = "hk_line " + className;
+
+      hkConsole.appendChild(hkDiv);
+
+      for (let i = 0; i < text.length; i++) {
+        hkDiv.textContent += text[i];
+
+        hkScroll();
+
+        await hkSleep(10 + Math.random() * 15);
+      }
+    }
+
+    function hkRandomHex() {
+      const hkChars = "스타크래프트립버젼1.16.1";
+
+      let hkText = "";
+
+      for (let i = 0; i < 64; i++) {
+        hkText += hkChars[Math.floor(Math.random() * hkChars.length)];
+      }
+
+      return hkText;
+    }
+
+    async function hkDump(count = 15) {
+      for (let i = 0; i < count; i++) {
+        await hkPrint(hkRandomHex());
+
+        await hkSleep(25);
+      }
+    }
+
+    async function hkProgress() {
+      const hkBar = document.createElement("div");
+
+      hkBar.className = "hk_line";
+
+      hkConsole.appendChild(hkBar);
+
+      for (let i = 0; i <= 100; i++) {
+        hkBar.textContent = `[${"█"
+          .repeat(Math.floor(i / 5))
+          .padEnd(20, " ")}] ${i}%`;
+
+        hkScroll();
+
+        await hkSleep(40);
+      }
+    }
+
+    async function hkBootSequence() {
+      await hkPrint("님 해킹당함 조땟슴 ㅅㄱ");
+
+      await hkSleep(500);
+
+      await hkPrint("[OK] MEMORY", "hk_success");
+
+      await hkPrint("[OK] NETWORK", "hk_success");
+
+      await hkPrint("[OK] CRYPTO", "hk_success");
+
+      await hkSleep(700);
+
+      await hkPrint("");
+
+      await hkPrint("root@node:~$ scan");
+
+      await hkSleep(400);
+
+      await hkPrint("Scanning target...");
+
+      await hkProgress();
+
+      await hkPrint("[OPEN] 22 SSH", "hk_success");
+
+      await hkPrint("[OPEN] 80 HTTP", "hk_success");
+
+      await hkPrint("[OPEN] 443 HTTPS", "hk_success");
+
+      await hkSleep(500);
+
+      await hkPrint("");
+
+      await hkPrint("root@node:~$ enumerate");
+
+      await hkDump(20);
+
+      await hkSleep(800);
+
+      await hkPrint("[WARNING] Firewall", "hk_warning");
+
+      await hkSleep(1000);
+
+      await hkPrint("Attempting bypass...");
+
+      await hkProgress();
+
+      await hkPrint("[SUCCESS] Bypass Complete", "hk_success");
+
+      await hkSleep(1000);
+
+      await hkPrint("");
+
+      await hkPrint("root@node:~$ connect");
+
+      await hkSleep(700);
+
+      await hkProgress();
+
+      await hkPrint("ACCESS GRANTED", "hk_big hk_success");
+
+      await hkSleep(1500);
+
+      await hkPrint("Downloading archive...");
+
+      await hkProgress();
+
+      await hkPrint("TRANSFER COMPLETE", "hk_success");
+
+      await hkSleep(1000);
+
+      await hkPrint("SESSION CLOSED");
+    }
+    z;
+    hkBootSequence();
+  }
+
+  function showKakaoTalk(fade = true) {
+    const notif_a = document.getElementById("notification_a");
+    notif_a.classList.remove("show");
+    // notif.querySelector(".content strong").textContent = sender;
+    // notif.querySelector(".content p").textContent = message;
+
+    setTimeout(() => notif_a.classList.add("show"), 1000);
+    if (fade) setTimeout(() => notif_a.classList.remove("show"), 5000);
+  }
+</script>

@@ -1,0 +1,136 @@
+<style>
+  .loading-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    overflow: hidden;
+    transition-duration: 0.5s;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .loading-bg {
+    position: absolute;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+  }
+
+  .loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.82) 0%,
+      rgba(0, 0, 0, 0.48) 38%,
+      rgba(0, 0, 0, 0.18) 100%
+    );
+  }
+
+  .loading-info {
+    position: relative;
+    z-index: 2;
+    width: min(62%, 1100px);
+    padding: 0 0 70px 70px;
+    color: #fff;
+  }
+
+  .loading-title {
+    font-size: clamp(56px, 6vw, 98px);
+    font-weight: 900;
+    font-style: italic;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-shadow: 0 4px 14px rgba(0, 0, 0, 0.9);
+  }
+
+  .loading-desc {
+    max-width: 60vw;
+    margin-top: 18px;
+    font-size: clamp(18px, 1.4vw, 28px);
+    color: #f0f0f0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+  }
+
+  .loading-status {
+    position: relative;
+    z-index: 2;
+    width: 25vw;
+    min-width: 250px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px;
+    color: #fff;
+  }
+
+  .spinner {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    border: 7px solid rgba(255, 255, 255, 0.2);
+    border-top-color: #fff;
+    animation: spin 0.85s linear infinite;
+  }
+
+  .loading-text {
+    margin-top: 22px;
+    font-size: 26px;
+    font-weight: 700;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+</style>
+<div id="scheduleLoading" class="loading-screen">
+  <img class="loading-bg" src="/img/엄준식.jpg" alt="" />
+  <div class="loading-overlay"></div>
+  <div class="loading-info">
+    <div class="loading-title"></div>
+    <div class="loading-desc"></div>
+  </div>
+  <div class="loading-status">
+    <div class="spinner"></div>
+    <div class="loading-text">전투를 준비 중...</div>
+  </div>
+</div>
+<script th:inline="javascript">
+  document.addEventListener("DOMContentLoaded", () => {
+    const loadingsrc = document.querySelector(".loading-screen");
+    const loading = document.getElementById("scheduleLoading");
+
+    function moveSchedule(image, title, desc) {
+      // 내용 변경
+      loadingsrc.querySelector(".loading-bg").src = image;
+      loadingsrc.querySelector(".loading-title").textContent = title;
+      loadingsrc.querySelector(".loading-desc").textContent = desc;
+      // 화면 표시
+      loading.style.display = "flex";
+      // 5초 후 사라짐
+    }
+
+    moveSchedule(
+      /*[[${schedule.scheduleThumbnail=='/img/thumbnail.png'?'/img/엄준식.jpg':schedule.scheduleThumbnail}]]*/ "",
+      /*[[${schedule.title}]]*/ "",
+      /*[[${schedule.description}]]*/ "",
+    );
+
+    setTimeout(() => (loading.style.opacity = 0), 2000);
+    setTimeout(() => {
+      loadingsrc.remove();
+    }, 3000);
+  });
+</script>

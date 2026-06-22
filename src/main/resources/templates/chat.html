@@ -1,0 +1,629 @@
+<!doctype html>
+<html
+  lang="ko"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Realtime Collaboration</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #f5f6fa;
+        color: #111827;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      .page {
+        display: flex;
+        gap: 16px;
+        min-height: 100vh;
+        padding: 16px;
+      }
+
+      .board-area,
+      .chat-area {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+      }
+
+      .board-area {
+        flex: 7;
+        padding: 16px;
+        overflow: auto;
+        position: relative;
+      }
+
+      .chat-area {
+        flex: 3;
+        min-width: 320px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+
+      .board-title,
+      .chat-title {
+        margin: 0;
+        font-size: 20px;
+      }
+
+      .user-chip {
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #eef2ff;
+        color: #3730a3;
+        font-size: 13px;
+        font-weight: 700;
+        word-break: break-word;
+      }
+
+      .logout-button {
+        height: 32px;
+        padding: 0 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        background: #fff;
+        color: #374151;
+        cursor: pointer;
+      }
+
+      .logout-button:hover {
+        background: #f3f4f6;
+      }
+
+      .board-columns {
+        display: flex;
+        gap: 16px;
+        min-height: calc(100vh - 88px);
+      }
+
+      .column {
+        flex: 1;
+        min-width: 180px;
+        min-height: 220px;
+        padding: 12px;
+        border-radius: 8px;
+        background: #f8f9fc;
+      }
+
+      .column h3 {
+        margin: 0 0 12px;
+        font-size: 16px;
+      }
+
+      .task {
+        margin-bottom: 10px;
+        padding: 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        cursor: grab;
+        user-select: none;
+      }
+
+      .task.dragging {
+        opacity: 0.5;
+      }
+
+      .chat-messages {
+        flex: 1;
+        min-height: 240px;
+        margin-bottom: 12px;
+        padding: 12px;
+        overflow-y: auto;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        background: #fafafa;
+      }
+
+      .msg {
+        margin-bottom: 8px;
+        line-height: 1.45;
+        word-break: break-word;
+      }
+
+      .sender {
+        font-weight: 700;
+        color: #1f2937;
+      }
+
+      .chat-input {
+        display: flex;
+        gap: 8px;
+      }
+
+      .chat-input input {
+        flex: 1;
+        min-width: 0;
+        height: 42px;
+        padding: 0 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        outline: none;
+      }
+
+      .chat-input input:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+      }
+
+      .chat-input button {
+        width: 72px;
+        height: 42px;
+        border: none;
+        border-radius: 6px;
+        background: #2563eb;
+        color: #fff;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .chat-input button:hover {
+        background: #1d4ed8;
+      }
+
+      #cursorLayer,
+      #ghostLayer {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 9999;
+      }
+
+      #cursorLayer {
+        z-index: 10001;
+      }
+
+      .remote-cursor {
+        position: fixed;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #ef4444;
+        pointer-events: none;
+        z-index: 9999;
+        transform: translate(-50%, -50%);
+      }
+
+      .remote-cursor-label {
+        position: absolute;
+        top: -20px;
+        left: 10px;
+        white-space: nowrap;
+        font-size: 12px;
+        padding: 2px 6px;
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.75);
+        color: #fff;
+      }
+
+      .drag-state {
+        position: fixed;
+        bottom: 16px;
+        left: 16px;
+        z-index: 10000;
+        display: none;
+        padding: 10px 14px;
+        border-radius: 8px;
+        background: rgba(17, 24, 39, 0.9);
+        color: #fff;
+        font-size: 13px;
+      }
+
+      @media (max-width: 840px) {
+        .page {
+          flex-direction: column;
+        }
+
+        .chat-area {
+          min-width: 0;
+        }
+
+        .board-columns {
+          min-height: 360px;
+          overflow-x: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="cursorLayer"></div>
+    <div id="ghostLayer"></div>
+    <div id="dragState" class="drag-state"></div>
+
+    <div class="page">
+      <div class="board-area">
+        <div class="section-header">
+          <h2 class="board-title">작업 보드</h2>
+          <form th:action="@{/user/logout}" method="post">
+            <button class="logout-button" type="submit">로그아웃</button>
+          </form>
+        </div>
+
+        <div class="board-columns">
+          <div class="column" data-status="todo">
+            <h3>할 일</h3>
+            <div class="task" draggable="true" data-id="1" data-status="todo">
+              장소 정하기
+            </div>
+            <div class="task" draggable="true" data-id="2" data-status="todo">
+              날짜 후보 모으기
+            </div>
+          </div>
+
+          <div class="column" data-status="doing">
+            <h3>진행 중</h3>
+          </div>
+
+          <div class="column" data-status="done">
+            <h3>완료</h3>
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-area">
+        <div class="section-header">
+          <h2 class="chat-title">채팅</h2>
+          <span class="user-chip" th:text="${username}">guest</span>
+        </div>
+
+        <div class="chat-messages" id="chatMessages"></div>
+
+        <div class="chat-input">
+          <input
+            type="text"
+            id="content"
+            placeholder="메시지 입력"
+            autocomplete="off"
+          />
+          <button type="button" onclick="sendMessage()">전송</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let stompClient = null;
+      let connected = false;
+      let draggedTask = null;
+
+      const remoteCursors = new Map();
+      const remoteDragState = new Map();
+
+      let cursorQueue = [];
+      let cursorBatchTimer = null;
+
+      function connect() {
+        const socket = new SockJS("/ws");
+        stompClient = Stomp.over(socket);
+        stompClient.debug = null;
+
+        stompClient.connect({}, function () {
+          connected = true;
+
+          stompClient.subscribe("/topic/chatroom", function (message) {
+            showMessage(JSON.parse(message.body));
+          });
+
+          stompClient.subscribe("/topic/task", function (message) {
+            const data = JSON.parse(message.body);
+            const task = document.querySelector(
+              `.task[data-id='${data.taskId}']`,
+            );
+            const targetColumn = document.querySelector(
+              `.column[data-status='${data.newStatus}']`,
+            );
+
+            if (task && targetColumn) {
+              targetColumn.appendChild(task);
+              task.dataset.status = data.newStatus;
+            }
+          });
+
+          stompClient.subscribe("/topic/cursor.batch", function (message) {
+            JSON.parse(message.body).forEach(renderRemoteCursor);
+          });
+
+          stompClient.subscribe("/topic/task.drag", function (message) {
+            renderRemoteDragState(JSON.parse(message.body));
+          });
+
+          stompClient.subscribe("/topic/task.drag.move", function (message) {
+            const data = JSON.parse(message.body);
+            renderRemoteCursor(data);
+            renderRemoteDraggingTask(data);
+          });
+
+          startCursorBatchSender();
+        });
+      }
+
+      function sendMessage() {
+        const contentInput = document.getElementById("content");
+        const content = contentInput.value.trim();
+
+        if (!content || !stompClient || !connected) return;
+
+        stompClient.send(
+          "/app/chat.send",
+          {},
+          JSON.stringify({
+            sender: MY_NAME,
+            content: content,
+          }),
+        );
+
+        contentInput.value = "";
+        contentInput.focus();
+      }
+
+      function showMessage(chat) {
+        const chatBox = document.getElementById("chatMessages");
+        const div = document.createElement("div");
+        const sender = document.createElement("span");
+        const message = document.createElement("span");
+
+        div.className = "msg";
+        sender.className = "sender";
+        sender.textContent = chat.sender;
+        message.textContent = `: ${chat.content}`;
+
+        div.appendChild(sender);
+        div.appendChild(message);
+        chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+
+      function renderRemoteCursor(data) {
+        if (data.userId === MY_USER_ID) return;
+
+        let cursor = document.getElementById(`cursor-${data.userId}`);
+
+        if (!cursor) {
+          cursor = document.createElement("div");
+          cursor.id = `cursor-${data.userId}`;
+          cursor.className = "remote-cursor";
+
+          const label = document.createElement("div");
+          label.className = "remote-cursor-label";
+          label.textContent = data.username || "user";
+
+          cursor.appendChild(label);
+          document.getElementById("cursorLayer").appendChild(cursor);
+        }
+
+        cursor.style.left = `${data.x}px`;
+        cursor.style.top = `${data.y}px`;
+
+        if (remoteCursors.has(data.userId)) {
+          clearTimeout(remoteCursors.get(data.userId));
+        }
+
+        const timeout = setTimeout(() => {
+          cursor.remove();
+          remoteCursors.delete(data.userId);
+        }, 3000);
+
+        remoteCursors.set(data.userId, timeout);
+      }
+
+      function renderRemoteDragState(data) {
+        if (data.userId === MY_USER_ID) return;
+
+        const dragState = document.getElementById("dragState");
+        const key = `${data.userId}-${data.taskId}`;
+
+        if (data.type === "START") {
+          dragState.style.display = "block";
+          dragState.textContent = `${data.username || "user"}님이 ${data.taskId}번 작업을 이동 중입니다.`;
+          remoteDragState.set(key, true);
+        }
+
+        if (data.type === "END") {
+          remoteDragState.delete(key);
+          removeRemoteDraggingTask(data.userId);
+
+          if (remoteDragState.size === 0) {
+            dragState.style.display = "none";
+            dragState.textContent = "";
+          }
+        }
+      }
+
+      function renderRemoteDraggingTask(data) {
+        if (data.userId === MY_USER_ID) return;
+
+        const originalTask = document.querySelector(
+          `.task[data-id='${data.taskId}']`,
+        );
+        if (!originalTask) return;
+
+        let ghost = document.getElementById(`ghost-task-${data.userId}`);
+
+        if (!ghost) {
+          ghost = originalTask.cloneNode(true);
+          ghost.id = `ghost-task-${data.userId}`;
+          ghost.removeAttribute("data-id");
+          ghost.classList.add("ghost-task");
+
+          const rect = originalTask.getBoundingClientRect();
+          ghost.style.position = "fixed";
+          ghost.style.width = rect.width + "px";
+          ghost.style.height = rect.height + "px";
+          ghost.style.pointerEvents = "none";
+          ghost.style.zIndex = "10000";
+
+          document.body.appendChild(ghost);
+        }
+
+        ghost.style.left = data.x + "px";
+        ghost.style.top = data.y + "px";
+      }
+
+      function removeRemoteDraggingTask(userId) {
+        const ghost = document.getElementById(`ghost-task-${userId}`);
+        if (ghost) ghost.remove();
+      }
+
+      function throttle(fn, wait) {
+        let lastTime = 0;
+        return function (...args) {
+          const now = Date.now();
+          if (now - lastTime >= wait) {
+            lastTime = now;
+            fn.apply(this, args);
+          }
+        };
+      }
+
+      function startCursorBatchSender() {
+        if (cursorBatchTimer) return;
+
+        cursorBatchTimer = setInterval(function () {
+          if (!stompClient || !connected || cursorQueue.length === 0) return;
+
+          const batch = cursorQueue.slice();
+          cursorQueue = [];
+
+          stompClient.send(
+            "/app/cursor.batch",
+            {},
+            JSON.stringify({
+              cursors: batch,
+            }),
+          );
+        }, 50);
+      }
+
+      const queueCursor = throttle(function (e) {
+        if (!stompClient || !connected) return;
+
+        cursorQueue.push({
+          userId: MY_USER_ID,
+          username: MY_NAME,
+          x: e.clientX,
+          y: e.clientY,
+        });
+      }, 10);
+
+      document.addEventListener("mousemove", queueCursor);
+
+      const sendDragMove = throttle(function (e) {
+        if (!draggedTask || !stompClient || !connected) return;
+
+        stompClient.send(
+          "/app/task.drag.move",
+          {},
+          JSON.stringify({
+            userId: MY_USER_ID,
+            username: MY_NAME,
+            taskId: draggedTask.dataset.id,
+            x: e.clientX,
+            y: e.clientY,
+          }),
+        );
+      }, 30);
+
+      document.addEventListener("dragover", sendDragMove);
+
+      document.querySelectorAll(".task").forEach((task) => {
+        task.addEventListener("dragstart", () => {
+          draggedTask = task;
+          task.classList.add("dragging");
+
+          if (stompClient && connected) {
+            stompClient.send(
+              "/app/task.drag.start",
+              {},
+              JSON.stringify({
+                userId: MY_USER_ID,
+                username: MY_NAME,
+                taskId: task.dataset.id,
+              }),
+            );
+          }
+        });
+
+        task.addEventListener("dragend", () => {
+          task.classList.remove("dragging");
+
+          if (stompClient && connected) {
+            stompClient.send(
+              "/app/task.drag.end",
+              {},
+              JSON.stringify({
+                userId: MY_USER_ID,
+                username: MY_NAME,
+                taskId: task.dataset.id,
+              }),
+            );
+          }
+
+          removeRemoteDraggingTask(MY_USER_ID);
+          draggedTask = null;
+        });
+      });
+
+      document.querySelectorAll(".column").forEach((column) => {
+        column.addEventListener("dragover", (e) => {
+          e.preventDefault();
+        });
+
+        column.addEventListener("drop", (e) => {
+          e.preventDefault();
+          if (!draggedTask || !stompClient || !connected) return;
+
+          const newStatus = column.dataset.status;
+          const taskId = draggedTask.dataset.id;
+
+          column.appendChild(draggedTask);
+          draggedTask.dataset.status = newStatus;
+
+          stompClient.send(
+            "/app/task.move",
+            {},
+            JSON.stringify({
+              userId: MY_USER_ID,
+              username: MY_NAME,
+              taskId: taskId,
+              newStatus: newStatus,
+            }),
+          );
+        });
+      });
+
+      document
+        .getElementById("content")
+        .addEventListener("keydown", (event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            sendMessage();
+          }
+        });
+
+      connect();
+    </script>
+  </body>
+</html>

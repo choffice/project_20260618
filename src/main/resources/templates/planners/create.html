@@ -1,0 +1,826 @@
+<!doctype html>
+<html
+  lang="ko"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Let's Plan</title>
+    <link rel="stylesheet" th:href="@{/css/header.css}" />
+    <link rel="stylesheet" th:href="@{/css/footer.css}" />
+    <div th:replace="~{layout/chat_socket}"></div>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          linear-gradient(
+            180deg,
+            rgba(245, 251, 255, 0.62),
+            rgba(232, 246, 255, 0.78) 54%,
+            rgba(255, 255, 255, 0.96)
+          ),
+          url("https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1800&q=80")
+            center 38% / cover fixed;
+        color: #111;
+        font-family:
+          "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI",
+          sans-serif;
+        line-height: 1.5;
+        letter-spacing: 0;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      header {
+        width: 100%;
+      }
+
+      .page-container {
+        display: flex;
+        justify-content: center;
+        min-height: calc(100vh - 76px);
+        padding: 96px 24px 56px;
+      }
+
+      .create-panel {
+        display: grid;
+        grid-template-columns: 190px minmax(320px, 620px);
+        gap: 38px;
+        width: min(100%, 940px);
+        align-items: start;
+        padding: 34px;
+        border: 1px solid rgba(255, 255, 255, 0.72);
+        border-radius: 26px;
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+        backdrop-filter: blur(14px);
+      }
+
+      .page-title {
+        grid-column: 1 / -1;
+        width: 100%;
+        margin: 0 0 22px;
+        color: #10203f;
+        font-size: 34px;
+        font-weight: 900;
+        line-height: 1.2;
+        text-align: center;
+        text-shadow: 0 1px 12px rgba(255, 255, 255, 0.76);
+      }
+
+      .media-column {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      .upload-block h2,
+      .visibility-title {
+        margin: 0 0 10px;
+        color: #10203f;
+        font-size: 22px;
+        font-weight: 800;
+        line-height: 1.2;
+      }
+
+      .required {
+        color: #ff2f2f;
+        font-weight: 800;
+      }
+
+      .image-preview {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        width: 100%;
+        border: 1px solid rgba(148, 163, 184, 0.82);
+        border-radius: 18px;
+        background: rgba(248, 250, 252, 0.88);
+        cursor: pointer;
+        transition:
+          transform 0.2s,
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+
+      .image-preview img {
+        width: 64px;
+        height: 64px;
+        object-fit: contain;
+        opacity: 0.72;
+      }
+
+      .thumbnail-preview {
+        aspect-ratio: 1 / 1;
+      }
+
+      .banner-preview {
+        aspect-ratio: 3 / 2;
+      }
+
+      .image-size {
+        margin: 8px 0 6px;
+        text-align: center;
+        font-size: 12px;
+        color: #64748b;
+        font-weight: 700;
+      }
+
+      .file-trigger {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 34px;
+        margin: 0 auto;
+        border: 1px solid rgba(148, 163, 184, 0.8);
+        border-radius: 999px;
+        background: #ffffff;
+        cursor: pointer;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+        transition:
+          background 0.2s,
+          border-color 0.2s,
+          transform 0.2s;
+      }
+
+      .file-trigger:hover {
+        transform: translateY(-1px);
+        border-color: #2563eb;
+        background: #eff6ff;
+      }
+
+      .file-trigger svg {
+        width: 18px;
+        height: 18px;
+        stroke: #111;
+        stroke-width: 1.8;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .upload-block input[type="file"] {
+        display: none;
+      }
+
+      .form-column {
+        min-width: 0;
+        padding-top: 2px;
+      }
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      .form-group label {
+        margin: 0;
+        color: #10203f;
+        font-size: 22px;
+        font-weight: 800;
+        line-height: 1.2;
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+
+      .form-group input,
+      .form-group select,
+      .form-group textarea {
+        width: 100%;
+        border: 1px solid rgba(148, 163, 184, 0.92);
+        border-radius: 14px;
+        padding: 11px 14px;
+        background: rgba(255, 255, 255, 0.96);
+        color: #0f172a;
+        font: inherit;
+        font-size: 16px;
+        outline: none;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s,
+          background 0.2s;
+      }
+
+      .form-group input,
+      .form-group select {
+        height: 46px;
+      }
+
+      .form-group select {
+        appearance: none;
+        cursor: pointer;
+      }
+
+      .form-group textarea {
+        min-height: 180px;
+        resize: vertical;
+        line-height: 1.45;
+      }
+
+      .form-group input:focus,
+      .form-group select:focus,
+      .form-group textarea:focus,
+      .visibility-card:has(input:focus-visible) {
+        border-color: #2563eb;
+        background: #ffffff;
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.13);
+      }
+
+      .field-help {
+        margin: 0;
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.4;
+      }
+
+      .visibility-group {
+        margin-bottom: 22px;
+      }
+
+      .visibility-options {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+
+      .visibility-card {
+        position: relative;
+        display: grid;
+        grid-template-columns: 52px 1fr;
+        gap: 10px;
+        min-height: 92px;
+        border: 1px solid rgba(148, 163, 184, 0.92);
+        border-radius: 18px;
+        padding: 14px;
+        background: rgba(255, 255, 255, 0.9);
+        cursor: pointer;
+        transition:
+          transform 0.2s,
+          border-color 0.2s,
+          background 0.2s,
+          box-shadow 0.2s;
+      }
+
+      .visibility-card:hover {
+        transform: translateY(-2px);
+        border-color: #2563eb;
+        box-shadow: 0 12px 24px rgba(37, 99, 235, 0.11);
+      }
+
+      .visibility-card input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .visibility-card:has(input:checked) {
+        border-color: #2563eb;
+        background: linear-gradient(180deg, #ffffff, #eff6ff);
+        box-shadow:
+          inset 0 0 0 1px #2563eb,
+          0 14px 28px rgba(37, 99, 235, 0.14);
+      }
+
+      .visibility-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .visibility-icon svg {
+        width: 44px;
+        height: 44px;
+        stroke: #1e3a8a;
+        stroke-width: 1.5;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .visibility-text {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 4px;
+        min-width: 0;
+      }
+
+      .visibility-name {
+        font-size: 16px;
+        font-weight: 800;
+        color: #10203f;
+      }
+
+      .visibility-desc {
+        font-size: 12px;
+        line-height: 1.35;
+        color: #64748b;
+        font-weight: 700;
+      }
+
+      .button-row {
+        display: grid;
+        gap: 12px;
+      }
+
+      .submit-btn,
+      .cancel-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 48px;
+        border-radius: 14px;
+        font-size: 13px;
+        font-weight: 800;
+        text-decoration: none;
+        cursor: pointer;
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s,
+          background 0.2s;
+      }
+
+      .submit-btn {
+        border: none;
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        color: #fff;
+        box-shadow: 0 14px 26px rgba(37, 99, 235, 0.28);
+      }
+
+      .submit-btn:hover {
+        transform: translateY(-1px);
+        background: linear-gradient(135deg, #1d4ed8, #1e40af);
+      }
+
+      .cancel-btn {
+        border: 1px solid rgba(148, 163, 184, 0.9);
+        background: rgba(255, 255, 255, 0.84);
+        color: #10203f;
+      }
+
+      .cancel-btn:hover {
+        transform: translateY(-1px);
+        background: #fff;
+        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+      }
+
+      @media (max-width: 760px) {
+        .page-container {
+          padding: 88px 18px 40px;
+        }
+
+        .create-panel {
+          grid-template-columns: 1fr;
+          gap: 28px;
+          padding: 24px;
+        }
+
+        .media-column {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 18px;
+        }
+
+        .visibility-options {
+          grid-template-columns: 1fr;
+          gap: 12px;
+        }
+
+        .form-row {
+          grid-template-columns: 1fr;
+          gap: 0;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .media-column {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div th:replace="~{layout/header :: header}"></div>
+
+    <main class="page-container" sec:authorize="isAuthenticated()">
+      <form
+        class="create-panel"
+        id="plannersCreateForm"
+        th:action="@{/planners/create}"
+        method="post"
+        enctype="multipart/form-data"
+        novalidate
+      >
+        <input
+          type="hidden"
+          th:name="${_csrf.parameterName}"
+          th:value="${_csrf.token}"
+        />
+        <h1 class="page-title">플래너즈 생성</h1>
+
+        <aside class="media-column" aria-label="플래너즈 이미지">
+          <div class="upload-block">
+            <h2>썸네일</h2>
+            <label
+              class="image-preview thumbnail-preview"
+              id="thumbnailPreview"
+              for="plannersThumbnail"
+            >
+              <img th:src="@{/img/thumbnail.png}" alt="기본 썸네일" />
+            </label>
+            <p class="image-size"></p>
+            <label
+              class="file-trigger"
+              for="plannersThumbnail"
+              aria-label="썸네일 사진 선택"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 15V4"></path>
+                <path d="M8 8l4-4 4 4"></path>
+                <path d="M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"></path>
+              </svg>
+            </label>
+            <input
+              type="file"
+              id="plannersThumbnail"
+              name="plannersThumbnailFile"
+              accept="image/*"
+            />
+          </div>
+
+          <div class="upload-block">
+            <h2>배너</h2>
+            <label
+              class="image-preview banner-preview"
+              id="bannerPreview"
+              for="plannersBanner"
+            >
+              <img th:src="@{/img/banner.png}" alt="기본 배너" />
+            </label>
+            <p class="image-size"></p>
+            <label
+              class="file-trigger"
+              for="plannersBanner"
+              aria-label="배너 사진 선택"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 15V4"></path>
+                <path d="M8 8l4-4 4 4"></path>
+                <path d="M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"></path>
+              </svg>
+            </label>
+            <input
+              type="file"
+              id="plannersBanner"
+              name="plannersBannerFile"
+              accept="image/*"
+            />
+          </div>
+        </aside>
+
+        <section class="form-column" aria-label="플래너즈 정보">
+          <div class="form-group">
+            <label for="name"
+              >플래너즈 이름 <span class="required">*</span></label
+            >
+            <input
+              type="text"
+              id="name"
+              name="name"
+              minlength="4"
+              maxlength="30"
+              required
+            />
+            <p class="field-help">
+              플래너즈 이름은 4자 이상 30자 이하로 입력해주세요.
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label for="description">플래너즈 설명</label>
+            <textarea
+              id="description"
+              name="description"
+              maxlength="255"
+              required
+            ></textarea>
+            <p class="field-help">
+              플래너즈의 목적, 활동 내용 등을 소개해보세요.
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label for="maxPopulation"
+              >플래너즈 인원 제한 <span class="required">*</span></label
+            >
+            <input
+              type="number"
+              id="maxPopulation"
+              name="maxPopulation"
+              min="1"
+              max="100"
+              step="1"
+              value="1"
+              required
+            />
+            <p class="field-help">
+              플래너즈에 가입할 수 있는 최대 인원을 설정하세요. (1 ~ 100명)
+            </p>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="location">지역 <span class="required">*</span></label>
+              <select id="location" name="location" required>
+                <option value="">지역 선택</option>
+                <option value="서울">서울</option>
+                <option value="부산">부산</option>
+                <option value="제주">제주</option>
+                <option value="인천">인천</option>
+                <option value="대구">대구</option>
+                <option value="평양">평양</option>
+              </select>
+              <p class="field-help">플래너즈의 활동 지역을 선택하세요.</p>
+            </div>
+
+            <div class="form-group">
+              <label for="category"
+                >카테고리 <span class="required">*</span></label
+              >
+              <select id="category" name="category" required>
+                <option value="">카테고리 선택</option>
+                <option value="여행">여행</option>
+                <option value="스터디">스터디</option>
+                <option value="취미">취미</option>
+                <option value="스포츠">스포츠</option>
+                <option value="음식">음식</option>
+              </select>
+              <p class="field-help">플래너즈의 카테고리를 선택하세요.</p>
+            </div>
+          </div>
+
+          <div class="visibility-group">
+            <div class="visibility-title">
+              플래너즈 공개 여부 <span class="required">*</span>
+            </div>
+            <div class="visibility-options">
+              <label class="visibility-card">
+                <input type="radio" name="status" value="PUBLIC" checked />
+                <span class="visibility-icon" aria-hidden="true">
+                  <svg viewBox="0 0 48 48">
+                    <circle cx="24" cy="24" r="17"></circle>
+                    <path d="M7 24h34"></path>
+                    <path d="M24 7c5 5 8 11 8 17s-3 12-8 17"></path>
+                    <path d="M24 7c-5 5-8 11-8 17s3 12 8 17"></path>
+                  </svg>
+                </span>
+                <span class="visibility-text">
+                  <span class="visibility-name">공개</span>
+                  <span class="visibility-desc"
+                    >검색과 목록에서 누구나 확인하고 참여할 수 있어요.</span
+                  >
+                </span>
+              </label>
+
+              <label class="visibility-card">
+                <input type="radio" name="status" value="PRIVATE" />
+                <span class="visibility-icon" aria-hidden="true">
+                  <svg viewBox="0 0 48 48">
+                    <rect x="14" y="21" width="20" height="17" rx="2"></rect>
+                    <path d="M18 21v-6a6 6 0 0 1 12 0v6"></path>
+                    <path d="M24 28v4"></path>
+                    <circle cx="24" cy="27" r="1.5"></circle>
+                  </svg>
+                </span>
+                <span class="visibility-text">
+                  <span class="visibility-name">비공개</span>
+                  <span class="visibility-desc"
+                    >초대받은 사용자만 플래너즈 정보를 볼 수 있어요.</span
+                  >
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div class="button-row">
+            <button type="submit" class="submit-btn">등록하기</button>
+            <a th:href="@{/planners/list}" class="cancel-btn">취소</a>
+          </div>
+        </section>
+      </form>
+    </main>
+
+    <script th:src="@{/js/header.js}"></script>
+    <div th:replace="~{layout/footer}"></div>
+    <script>
+      (function () {
+        const form = document.getElementById("plannersCreateForm");
+
+        if (!form) {
+          return;
+        }
+
+        function bindImagePreview(inputId, previewId) {
+          const input = document.getElementById(inputId);
+          const preview = document.getElementById(previewId);
+
+          input.addEventListener("change", function (e) {
+            const file = e.target.files[0];
+
+            if (!file) {
+              return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function (event) {
+              preview.style.backgroundImage =
+                "url(" + event.target.result + ")";
+              preview.style.backgroundSize = "cover";
+              preview.style.backgroundPosition = "center";
+              preview.innerHTML = "";
+            };
+            reader.readAsDataURL(file);
+          });
+        }
+
+        bindImagePreview("plannersThumbnail", "thumbnailPreview");
+        bindImagePreview("plannersBanner", "bannerPreview");
+
+        form.addEventListener("submit", function (e) {
+          const requiredFields = [
+            { id: "name", message: "플래너즈 이름을 입력해주세요." },
+            {
+              id: "maxPopulation",
+              message: "플래너즈 인원 제한을 입력해주세요.",
+            },
+            { id: "location", message: "지역을 선택해주세요." },
+            { id: "category", message: "카테고리를 선택해주세요." },
+          ];
+
+          for (const field of requiredFields) {
+            const input = document.getElementById(field.id);
+
+            if (!input.value.trim()) {
+              e.preventDefault();
+              alert(field.message);
+              input.focus();
+              return;
+            }
+          }
+
+          const name = document.getElementById("name");
+          const population = document.getElementById("maxPopulation");
+          const populationValue = Number(population.value);
+
+          if (name.value.trim().length < 4 || name.value.trim().length > 30) {
+            e.preventDefault();
+            alert("플래너즈 이름은 4자 이상 30자 이하로 입력해주세요.");
+            name.focus();
+            return;
+          }
+
+          if (
+            !Number.isInteger(populationValue) ||
+            populationValue < 1 ||
+            populationValue > 100
+          ) {
+            e.preventDefault();
+            alert("플래너즈 인원 제한은 1명부터 100명까지 입력할 수 있습니다.");
+            population.focus();
+          }
+        });
+      })();
+    </script>
+    <script>
+      //오창_빠르게 만들기
+      //랜덤함수
+      function rand(max, min = 0, gap = 1, rs = 0) {
+        let tmpmax = [];
+        if (typeof max == "object") {
+          if (max.length == undefined) {
+            for (mkey in max) {
+              tmpmax.push(mkey);
+            }
+          } else tmpmax = max.slice(0, max.length);
+        }
+        typeof max == "object"
+          ? (rs = tmpmax[Math.floor(Math.random() * tmpmax.length)])
+          : (rs =
+              Math.floor(Math.random() * (parseInt(max - min) / gap + 1)) *
+                gap +
+              min);
+        return rs;
+      }
+
+      const adj =
+        "즐거운/기깔나는/간지나는/쌈뽕한/개쩌는/신나는/보람찬/신기한/새로운/혁신적인/혁명적인/청춘들의/오타쿠들의".split(
+          "/",
+        );
+      const grouped =
+        "모임/회의/집회/동아리/동호회/집합소/연구회/공작소/협회/크루".split(
+          "/",
+        );
+
+      const categories = {
+        여행: [
+          "해외여행",
+          "국내여행",
+          "맛집투어",
+          "문화재관람",
+          "캠핑",
+          "호캉스",
+          "자전거여행",
+          "등산",
+          "섬여행",
+          "도시투어",
+        ],
+        스터디: [
+          "영어회화",
+          "토익준비",
+          "자격증공부",
+          "코딩스터디",
+          "독서모임",
+          "논문세미나",
+          "수학문제풀이",
+          "역사토론",
+          "과학실험",
+          "작문연습",
+        ],
+        취미: [
+          "사진찍기",
+          "그림그리기",
+          "악기연주",
+          "글쓰기",
+          "DIY공예",
+          "가드닝",
+          "퍼즐맞추기",
+          "드론날리기",
+          "모형조립",
+          "보드게임",
+        ],
+        스포츠: [
+          "축구",
+          "농구",
+          "야구",
+          "배드민턴",
+          "테니스",
+          "수영",
+          "마라톤",
+          "요가",
+          "클라이밍",
+          "스케이트보드",
+        ],
+        음식: [
+          "한식",
+          "중식",
+          "일식",
+          "양식",
+          "인도요리",
+          "태국요리",
+          "멕시코요리",
+          "프랑스요리",
+          "이탈리아요리",
+          "베트남요리",
+        ],
+      };
+
+      const location1 = document.querySelector("[name=location]");
+
+      document.ondblclick = () => {
+        maxPopulation.value = rand(100, 5);
+        location1.value = rand(location1.innerText.split("\n").slice(1, 10));
+        category.value = rand(category.innerText.split("\n").slice(1, 10));
+        description.value = [
+          rand(adj),
+          location1.value,
+          rand(categories[category.value]),
+          rand(grouped),
+        ].join(" ");
+        document.querySelector("[name=name]").value =
+          "[" +
+          location1.value +
+          "] " +
+          category.value +
+          description.value.split(" ")[3] +
+          "_" +
+          new Date()
+            .toJSON()
+            .replaceAll("-", "")
+            .replaceAll(":", "")
+            .substring(2, 13);
+      };
+    </script>
+  </body>
+</html>

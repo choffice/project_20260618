@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <title>마이페이지</title>
+    <link rel="stylesheet" th:href="@{/css/header.css}" />
+    <link rel="stylesheet" th:href="@{/css/footer.css}" />
+    <link rel="stylesheet" th:href="@{/css/mypage.css}" />
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+  </head>
+  <body>
+    <div th:replace="~{layout/header :: header}"></div>
+
+    <div class="mypage-wrap">
+      <h1 class="mypage-title">마이페이지</h1>
+
+      <div class="mypage-tabs">
+        <button class="tab active" id="accountTab">계정 관리</button>
+        <button class="tab" id="socialTab">소셜 관리</button>
+      </div>
+      <div id="accountSection">
+        <div class="mypage-content">
+          <div class="page-path">
+            <a th:href="@{/user/mypage}">마이페이지</a>
+            <span>&gt;</span>
+            <a th:href="@{/user/mypage}">계정 관리</a>
+          </div>
+
+          <section class="profile-section">
+            <div class="profile-top">
+              <img th:src="${user.profileImg}" class="profile-img" />
+
+              <div class="profile-info">
+                <h2 th:text="${user.name}"></h2>
+                <p th:text="${user.email}"></p>
+              </div>
+            </div>
+          </section>
+
+          <div class="info-section">
+            <h3>내 정보</h3>
+
+            <div class="edit-row">
+              <label>이메일</label>
+              <input type="text" th:value="${user.email}" readonly />
+            </div>
+
+            <div class="edit-row">
+              <label>이름</label>
+              <input type="text" th:value="${user.name}" readonly />
+            </div>
+
+            <div class="edit-row">
+              <label>비밀번호</label>
+              <input type="password" value="******" readonly />
+            </div>
+
+            <div class="edit-row">
+              <label>거주 지역</label>
+              <input type="text" th:value="${user.location}" readonly />
+            </div>
+
+            <div class="edit-row">
+              <label>선호 카테고리</label>
+              <input type="text" th:value="${user.category}" readonly />
+
+              <a th:href="@{/user/modify}">
+                <button type="button">변경</button>
+              </a>
+            </div>
+          </div>
+
+          <section class="social-section plan-social-section">
+            <h3>플래너즈 관리</h3>
+
+            <div class="social-card-box">
+              <a th:href="@{/planners/mylist}" class="social-item">
+                <div class="social-icon">👥</div>
+                <div class="social-text">
+                  <strong>가입한 플래너즈</strong>
+                  <p>내가 소속되어 있는 플래너즈 목록을 확인할 수 있어요.</p>
+                </div>
+                <div class="social-arrow">›</div>
+              </a>
+              <a th:href="@{/planners/invited/list}" class="social-item">
+                <div class="social-icon">👋</div>
+                <div class="social-text">
+                  <strong>초대 받은 플래너즈</strong>
+                  <p>초대 받은 플래너즈 목록을 확인할 수 있어요.</p>
+                </div>
+                <div class="social-arrow">›</div>
+              </a>
+              <a th:href="@{/planners/created/list}" class="social-item">
+                <div class="social-icon">👑</div>
+                <div class="social-text">
+                  <strong>내가 만든 플래너즈</strong>
+                  <p>내가 생성한 플래너즈 목록을 확인할 수 있어요.</p>
+                </div>
+                <div class="social-arrow">›</div>
+              </a>
+              <a th:href="@{/planners/favorite/list}" class="social-item">
+                <div class="social-icon">💖</div>
+                <div class="social-text">
+                  <strong>찜한 플래너즈</strong>
+                  <p>찜 목록에 있는 플래너즈를 확인할 수 있어요.</p>
+                </div>
+                <div class="social-arrow">›</div>
+              </a>
+            </div>
+          </section>
+
+          <section id="activity-section" class="activity-section">
+            <h3>알림</h3>
+
+            <div
+              class="activity-list"
+              th:if="${!#lists.isEmpty(notifications)}"
+            >
+              <div
+                class="activity-item"
+                th:each="notification: ${notifications}"
+              >
+                <div
+                  class="activity-icon"
+                  th:classappend="${' activity-icon-' + #strings.toLowerCase(notification.type.name())}"
+                  th:switch="${notification.type.name()}"
+                >
+                  <span th:case="'SCHEDULE'">📅</span>
+                  <span th:case="'GROUP'">👥</span>
+                  <span th:case="'ACTIVITY'">🔔</span>
+                  <span th:case="*">🔔</span>
+                </div>
+                <p
+                  class="notificationTitle"
+                  th:text="${notification.title}"
+                ></p>
+                <p
+                  class="rmvBtn"
+                  th:onclick="|removeNotification(${notification.nid}, this)|"
+                >
+                  삭제
+                </p>
+              </div>
+            </div>
+
+            <div class="activity-list" th:if="${#lists.isEmpty(notifications)}">
+              <div class="activity-item activity-empty">
+                <div class="activity-icon activity-icon-empty">🔔</div>
+                <p>알림이 없습니다.</p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!--  ================================ 소셜 페이지 ================================ -->
+
+      <div id="socialSection" style="display: none">
+        <div class="mypage-content">
+          <div class="page-path">
+            <a th:href="@{/user/mypage}">마이페이지</a>
+            <span>&gt;</span>
+            <a th:href="@{/user/mypage#socialSection#}">소셜 관리</a>
+          </div>
+
+          <section class="social-section">
+            <h3>친구 목록</h3>
+            <div class="social-card-box">
+              <a href="/friends" class="social-item">
+                <div class="social-icon">👥</div>
+                <div class="social-text">
+                  <strong>친구 관리</strong>
+                  <p>내 친구 목록을 확인할 수 있어요.</p>
+                </div>
+                <div class="social-arrow">›</div>
+              </a>
+              <a href="/friends?tab=request" class="social-item">
+                <div class="social-icon">👋</div>
+                <div class="social-text">
+                  <strong>친구 요청 관리</strong>
+                  <p>나에게 온 친구 요청 목록을 확인할 수 있어요.</p>
+                </div>
+                <div class="social-arrow">›</div>
+              </a>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <script th:inline="javascript">
+      const accountTab = document.querySelector("#accountTab");
+      const socialTab = document.querySelector("#socialTab");
+
+      const accountSection = document.querySelector("#accountSection");
+      const socialSection = document.querySelector("#socialSection");
+
+      accountTab.addEventListener("click", () => {
+        accountSection.style.display = "block";
+        socialSection.style.display = "none";
+
+        accountTab.classList.add("active");
+        socialTab.classList.remove("active");
+      });
+
+      socialTab.addEventListener("click", () => {
+        accountSection.style.display = "none";
+        socialSection.style.display = "block";
+
+        socialTab.classList.add("active");
+        accountTab.classList.remove("active");
+      });
+
+      function removeNotification(nid, ele) {
+        const url = "/notification?nid=";
+        const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+        const csrfHeader = document.querySelector(
+          'meta[name="_csrf_header"]',
+        ).content;
+        fetch(url + nid, {
+          method: "DELETE",
+          headers: { [csrfHeader]: csrfToken },
+        }).then((res) => {
+          if (res.status === 200) {
+            ele.parentElement.remove();
+          }
+        });
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const section = params.get("section");
+
+      if (section === "social") {
+        accountSection.style.display = "none";
+        socialSection.style.display = "block";
+
+        socialTab.classList.add("active");
+        accountTab.classList.remove("active");
+      }
+    </script>
+    <script th:src="@{/js/header.js}"></script>
+    <div th:replace="~{layout/footer}"></div>
+  </body>
+</html>

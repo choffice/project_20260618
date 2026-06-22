@@ -1,0 +1,206 @@
+<style>
+  .yandereModule {
+    display: none;
+    overflow: hidden;
+    margin: 0;
+    height: 100vh;
+    width: 100vw;
+    position: fixed;
+    top: 0;
+    left: 0;
+  }
+  .yandereModule.on {
+    display: block;
+  }
+
+  .yandere-text {
+    position: fixed;
+    color: red;
+    font-weight: bold;
+    white-space: nowrap;
+    animation: yandere-glitch 0.3s infinite;
+  }
+  @keyframes yandere-glitch {
+    0% {
+      text-shadow:
+        2px 0 red,
+        -2px 0 cyan;
+    }
+    20% {
+      text-shadow:
+        -2px 0 red,
+        2px 0 cyan;
+    }
+    40% {
+      text-shadow:
+        2px 2px red,
+        -2px -2px cyan;
+    }
+    60% {
+      text-shadow:
+        -2px -2px red,
+        2px 2px cyan;
+    }
+    80% {
+      text-shadow:
+        2px -2px red,
+        -2px 2px cyan;
+    }
+    100% {
+      text-shadow:
+        -2px 2px red,
+        2px -2px cyan;
+    }
+  }
+
+  .yandere-finalText {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    -webkit-text-stroke: 3px #fff;
+    transform: translate(-50%, -50%);
+    font-family: "궁서", serif;
+    font-size: 150px;
+    color: black;
+    text-align: center;
+    white-space: pre-line;
+  }
+
+  .yandere-buttonContainer {
+    position: absolute;
+    bottom: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .yandere-btn {
+    font-size: 24px;
+    padding: 10px 20px;
+    margin: 0 20px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 5s;
+  }
+  .yandere-btn-blue {
+    background-color: blue;
+    color: white;
+  }
+  .yandere-btn-gray {
+    background-color: lightgray;
+    color: black;
+  }
+  .yandere-btn-gray:hover {
+    background-color: red;
+    color: white;
+  }
+</style>
+<div class="yandereModule"></div>
+<script>
+  function yandere_switch(tid) {
+    const yandere_module = document.querySelector(".yandereModule");
+    yandere_module.classList.add("on");
+
+    let count = 0;
+    const maxCount = 10;
+
+    function createText() {
+      if (count >= maxCount) return;
+      count++;
+
+      const yantext = document.createElement("div");
+      yantext.className = "yandere-text";
+      yantext.innerText = "가지마";
+
+      const size = Math.floor(Math.random() * 100) + 100;
+      yantext.style.fontSize = size + "px";
+
+      const x = Math.random() * (yandere_module.clientWidth - size);
+      const y = Math.random() * (yandere_module.clientHeight - size);
+      yantext.style.left = x + "px";
+      yantext.style.top = y + "px";
+
+      const angle = Math.random() * 60 - 30;
+      yantext.style.transform = `rotate(${angle}deg)`;
+
+      yandere_module.appendChild(yantext);
+    }
+
+    const interval = setInterval(() => {
+      createText();
+      if (count >= maxCount) {
+        clearInterval(interval);
+        showFinalText();
+      }
+    }, 300);
+
+    function showFinalText() {
+      const final = document.createElement("div");
+      final.className = "yandere-finalText";
+      yandere_module.appendChild(final);
+
+      // 순차적으로 텍스트 출력
+      setTimeout(() => {
+        final.innerText = "진짜...\n";
+      }, 300);
+      setTimeout(() => {
+        final.innerText += "갈.";
+      }, 800);
+      setTimeout(() => {
+        final.innerText += "거.";
+      }, 1100);
+      setTimeout(() => {
+        final.innerText += "야?";
+      }, 1400);
+
+      // 버튼은 5초 뒤 노출
+      setTimeout(() => {
+        const btnContainer = document.createElement("div");
+        btnContainer.className = "yandere-buttonContainer";
+
+        const btnStay = document.createElement("button");
+        btnStay.className = "yandere-btn yandere-btn-blue";
+        btnStay.innerText = "있을게";
+
+        const btnSorry = document.createElement("button");
+        btnSorry.className = "yandere-btn yandere-btn-gray";
+        btnSorry.innerText = "미안해";
+
+        btnContainer.appendChild(btnStay);
+        btnContainer.appendChild(btnSorry);
+        yandere_module.appendChild(btnContainer);
+
+        btnStay.addEventListener(
+          "click",
+          () => {
+            clearAll();
+            showEndScreen("고마워!", "yandere-end-green");
+          },
+          2000,
+        );
+        btnSorry.addEventListener("click", () => {
+          clearAll();
+          showEndScreen("잘 가..", "yandere-end-red");
+          leaveComplete(tid);
+        });
+      }, 2000);
+    }
+
+    function clearAll() {
+      yandere_module.innerHTML = "";
+    }
+
+    function showEndScreen(message, colorClass) {
+      const scrend = document.createElement("div");
+      scrend.className = "yandere-endScreen " + colorClass;
+      const endtext = document.createElement("div");
+      endtext.className = "yandere-endText";
+      endtext.innerText = message;
+      scrend.appendChild(endtext);
+      yandere_module.appendChild(scrend);
+
+      setTimeout(() => {
+        scrend.remove();
+        yandere_module.classList.remove("on");
+      }, 3000);
+    }
+  }
+</script>

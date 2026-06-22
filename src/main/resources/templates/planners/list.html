@@ -1,0 +1,292 @@
+<!doctype html>
+<html
+  lang="ko"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Let's Plan</title>
+    <link rel="stylesheet" th:href="@{/css/header.css}" />
+    <link rel="stylesheet" th:href="@{/css/footer.css}" />
+    <div th:replace="~{layout/chat_socket}"></div>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+  </head>
+  <body>
+    <div th:replace="~{layout/header :: header}"></div>
+
+    <section class="home-hero" aria-label="플래너즈 검색">
+      <div class="hero-inner">
+        <h1>플래너즈 찾아보기</h1>
+
+        <form class="planner-search" th:action="@{/planners/list}" method="get">
+          <div class="search-box">
+            <span class="search-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <circle cx="11" cy="11" r="7"></circle>
+                <path d="m16.5 16.5 4 4"></path>
+              </svg>
+            </span>
+            <input
+              type="search"
+              name="keyword"
+              placeholder="플래너즈 이름, 취미, 키워드로 검색해보세요"
+              th:value="${pageRequestDTO.keyword ?: ''}"
+            />
+            <button type="submit">검색</button>
+          </div>
+
+          <input
+            type="hidden"
+            name="location"
+            id="locationInput"
+            th:value="${pageRequestDTO.location ?: ''}"
+          />
+          <input
+            type="hidden"
+            name="category"
+            id="categoryInput"
+            th:value="${pageRequestDTO.category ?: ''}"
+          />
+          <input
+            type="hidden"
+            name="sort"
+            id="sortInput"
+            th:value="${pageRequestDTO.sort ?: 'latest'}"
+          />
+
+          <div class="filter-row has-sort" aria-label="검색 필터">
+            <div class="filter-dropdown">
+              <button
+                type="button"
+                class="filter-select"
+                data-dropdown="region"
+                data-input="locationInput"
+                aria-expanded="false"
+                aria-controls="region-menu"
+              >
+                <span class="filter-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" focusable="false">
+                    <path
+                      d="M12 21s7-5.4 7-12a7 7 0 0 0-14 0c0 6.6 7 12 7 12Z"
+                    ></path>
+                    <circle cx="12" cy="9" r="2.5"></circle>
+                  </svg>
+                </span>
+                <span
+                  class="filter-label"
+                  data-default-label="지역 선택"
+                  th:text="${pageRequestDTO.location != null && pageRequestDTO.location != '' ? pageRequestDTO.location : '지역 선택'}"
+                  >지역 선택</span
+                >
+                <span class="chevron" aria-hidden="true"></span>
+              </button>
+              <div class="dropdown-menu" id="region-menu">
+                <button type="button" class="dropdown-item" data-value="">
+                  전체
+                </button>
+                <button type="button" class="dropdown-item" data-value="서울">
+                  서울
+                </button>
+                <button type="button" class="dropdown-item" data-value="부산">
+                  부산
+                </button>
+                <button type="button" class="dropdown-item" data-value="제주">
+                  제주
+                </button>
+                <button type="button" class="dropdown-item" data-value="인천">
+                  인천
+                </button>
+                <button type="button" class="dropdown-item" data-value="대구">
+                  대구
+                </button>
+                <button type="button" class="dropdown-item" data-value="평양">
+                  평양
+                </button>
+              </div>
+            </div>
+
+            <div class="filter-dropdown">
+              <button
+                type="button"
+                class="filter-select"
+                data-dropdown="category"
+                data-input="categoryInput"
+                aria-expanded="false"
+                aria-controls="category-menu"
+              >
+                <span class="filter-icon grid-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" focusable="false">
+                    <rect x="4" y="4" width="6" height="6" rx="1"></rect>
+                    <rect x="14" y="4" width="6" height="6" rx="1"></rect>
+                    <rect x="4" y="14" width="6" height="6" rx="1"></rect>
+                    <rect x="14" y="14" width="6" height="6" rx="1"></rect>
+                  </svg>
+                </span>
+                <span
+                  class="filter-label"
+                  data-default-label="카테고리 선택"
+                  th:text="${pageRequestDTO.category != null && pageRequestDTO.category != '' ? pageRequestDTO.category : '카테고리 선택'}"
+                  >카테고리 선택</span
+                >
+                <span class="chevron" aria-hidden="true"></span>
+              </button>
+              <div class="dropdown-menu" id="category-menu">
+                <button type="button" class="dropdown-item" data-value="">
+                  전체
+                </button>
+                <button type="button" class="dropdown-item" data-value="여행">
+                  여행
+                </button>
+                <button type="button" class="dropdown-item" data-value="스터디">
+                  스터디
+                </button>
+                <button type="button" class="dropdown-item" data-value="취미">
+                  취미
+                </button>
+                <button type="button" class="dropdown-item" data-value="스포츠">
+                  스포츠
+                </button>
+                <button type="button" class="dropdown-item" data-value="음식">
+                  음식
+                </button>
+              </div>
+            </div>
+
+            <div class="filter-dropdown">
+              <button
+                type="button"
+                class="filter-select"
+                data-dropdown="sort"
+                data-input="sortInput"
+                aria-expanded="false"
+                aria-controls="sort-menu"
+              >
+                <span class="filter-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" focusable="false">
+                    <path d="M4 7h12"></path>
+                    <path d="M4 12h8"></path>
+                    <path d="M4 17h4"></path>
+                    <path d="m17 14 3 3 3-3"></path>
+                    <path d="M20 7v10"></path>
+                  </svg>
+                </span>
+                <span
+                  class="filter-label"
+                  data-default-label="최신순"
+                  th:text="${pageRequestDTO.sort == 'name' ? '이름순' : (pageRequestDTO.sort == 'popular' ? '인기순' : '최신순')}"
+                  >최신순</span
+                >
+                <span class="chevron" aria-hidden="true"></span>
+              </button>
+              <div class="dropdown-menu" id="sort-menu">
+                <button type="button" class="dropdown-item" data-value="latest">
+                  최신순
+                </button>
+                <button type="button" class="dropdown-item" data-value="name">
+                  이름순
+                </button>
+                <button
+                  type="button"
+                  class="dropdown-item"
+                  data-value="popular"
+                >
+                  인기순
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <div class="planners-container">
+      <div class="planners-list">
+        <div
+          th:if="${#lists.isEmpty(pageResultDTO.dtoList)}"
+          class="inform-login"
+          style="
+            display: flex;
+            justify-content: center;
+            align-content: center;
+            flex-wrap: wrap;
+          "
+        >
+          <img th:src="@{/img/noResult.png}" style="width: 200px" />
+          <h3 style="width: 100%; text-align: center; color: var(--sub)">
+            결과를 찾을 수 없습니다.
+          </h3>
+        </div>
+
+        <article
+          class="planner-card planner-list-card"
+          th:each="planners : ${pageResultDTO.dtoList}"
+          th:onclick="goRead([[${planners.tid}]], [[${pageResultDTO.page}]], [[${pageRequestDTO.keyword}]], [[${pageRequestDTO.location}]], [[${pageRequestDTO.category}]], [[${pageRequestDTO.sort}]])"
+        >
+          <div class="card-image">
+            <button
+              type="button"
+              class="heart-btn"
+              sec:authorize="isAuthenticated()"
+              th:onclick="|event.stopPropagation(); favorite(${planners.tid})|"
+              th:classappend="${planners.favorite ? ' active' : ''}"
+            >
+              <svg viewBox="0 0 24 24" class="heart-icon" aria-hidden="true">
+                <path
+                  d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41 0.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.53L12 21.35z"
+                />
+              </svg>
+            </button>
+            <img
+              th:src="${planners.plannersThumbnail != null && planners.plannersThumbnail != '' ? planners.plannersThumbnail : '/img/thumbnail.png'}"
+              th:alt="${planners.name}"
+            />
+          </div>
+
+          <div class="card-body">
+            <h3>[[${planners.name}]]</h3>
+            <p>[[${planners.description}]]</p>
+
+            <div class="card-meta">
+              <span class="members"
+                >[[${planners.population}]]/[[${planners.maxPopulation}]]</span
+              >
+              <span class="place">[[${planners.location}]]</span>
+              <span class="category-tag" th:text="${planners.category}"
+                >카테고리</span
+              >
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <ul class="pagination h-100 justify-content-center align-items-center">
+      <li th:if="${pageResultDTO.prev}">
+        <a
+          th:href="@{/planners/list(page=${pageResultDTO.start-1}, keyword=${pageRequestDTO.keyword}, location=${pageRequestDTO.location}, category=${pageRequestDTO.category}, sort=${pageRequestDTO.sort})}"
+          class="page-link"
+          >이전</a
+        >
+      </li>
+      <li th:each="page : ${pageResultDTO.pageList}">
+        <a
+          th:href="@{/planners/list(page=${page}, keyword=${pageRequestDTO.keyword}, location=${pageRequestDTO.location}, category=${pageRequestDTO.category}, sort=${pageRequestDTO.sort})}"
+          th:class="'page-link' + ${pageResultDTO.page == page ? ' active' : ''}"
+          >[[${page}]]</a
+        >
+      </li>
+      <li th:if="${pageResultDTO.next}">
+        <a
+          th:href="@{/planners/list(page=${pageResultDTO.end+1}, keyword=${pageRequestDTO.keyword}, location=${pageRequestDTO.location}, category=${pageRequestDTO.category}, sort=${pageRequestDTO.sort})}"
+          class="page-link"
+          >다음</a
+        >
+      </li>
+    </ul>
+
+    <script th:src="@{/js/header.js}"></script>
+    <div th:replace="~{layout/footer}"></div>
+  </body>
+</html>

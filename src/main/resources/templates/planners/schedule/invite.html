@@ -1,0 +1,413 @@
+<!doctype html>
+<html
+  lang="ko"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <title>플래너즈 :: 일정 보기</title>
+    <!-- <link rel="icon" href="/favicon.ico" />-->
+    <link rel="stylesheet" th:href="@{/css/header.css}" />
+    <link rel="stylesheet" th:href="@{/css/plannersTap.css}" />
+    <link rel="stylesheet" th:href="@{/css/footer.css}" />
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <div th:replace="~{layout/chat_socket}"></div>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+  </head>
+  <body>
+    <div th:replace="~{layout/header}"></div>
+    <main class="detail-main">
+      <div class="detail-shell">
+        <div th:replace="~{layout/plannersTap}"></div>
+        <div th:replace="~{layout/invite_css}"></div>
+        <div id="srpv2-root">
+          <!-- BACK -->
+          <button
+            type="button"
+            id="srpv2BackButton"
+            class="srpv2-back-button"
+            onclick="history.back()"
+          >
+            ←
+          </button>
+          <h1 class="srpv2-page-title">일정 등록 페이지</h1>
+          <form
+            id="srpv2ScheduleForm"
+            enctype="multipart/form-data"
+            th:action="@{/planners/schedule/invite(tid=${plannersDTO.tid})}"
+            method="POST"
+          >
+            <!-- STEP 1 -->
+            <section class="srpv2-step-card">
+              <div class="srpv2-step-header">
+                <div id="srpv2Step1Status" class="srpv2-step-status">
+                  <svg viewBox="0 0 52 52">
+                    <circle class="srpv2-check-circle" cx="26" cy="26" r="24" />
+                    <path class="srpv2-check-mark" d="M14 27 L22 35 L38 18" />
+                  </svg>
+                </div>
+                <div>
+                  <h2>1단계</h2>
+                  <p>일정을 소개해주세요 (필수)</p>
+                </div>
+              </div>
+              <div class="srpv2-step-body">
+                <!-- 제목 -->
+                <div class="srpv2-field">
+                  <div class="srpv2-chip">제목</div>
+                  <div class="srpv2-floating">
+                    <input
+                      id="srpv2Title"
+                      name="title"
+                      type="text"
+                      maxlength="100"
+                      placeholder=" "
+                      required
+                    />
+                    <label>일정 제목</label>
+                  </div>
+                  <small id="srpv2TitleError" class="srpv2-error"></small>
+                </div>
+                <!-- 내용 -->
+                <div class="srpv2-field">
+                  <div class="srpv2-chip">내용</div>
+                  <div class="srpv2-floating">
+                    <textarea
+                      id="srpv2Content"
+                      name="description"
+                      maxlength="255"
+                      placeholder=" "
+                      required
+                    ></textarea>
+                    <label>일정 내용</label>
+                  </div>
+                  <small id="srpv2ContentError" class="srpv2-error"></small>
+                </div>
+                <!-- 인원 -->
+                <div class="srpv2-field">
+                  <div class="srpv2-chip">인원</div>
+                  <div class="srpv2-capacity-layout">
+                    <div class="srpv2-floating">
+                      <input
+                        id="srpv2Capacity"
+                        name="maxPopulation"
+                        type="number"
+                        min="1"
+                        max="100"
+                        value="100"
+                        placeholder=" "
+                        required
+                      />
+                      <label>참가 제한 인원</label>
+                    </div>
+                  </div>
+                  <small id="srpv2CapacityError" class="srpv2-error"></small>
+                </div>
+              </div>
+            </section>
+            <!-- STEP 2 -->
+            <section id="srpv2Step2" class="srpv2-step-card srpv2-hidden-step">
+              <div class="srpv2-step-header">
+                <div id="srpv2Step2Status" class="srpv2-step-status">
+                  <svg viewBox="0 0 52 52">
+                    <circle class="srpv2-check-circle" cx="26" cy="26" r="24" />
+                    <path class="srpv2-check-mark" d="M14 27 L22 35 L38 18" />
+                  </svg>
+                </div>
+                <div>
+                  <h2>2단계</h2>
+                  <p>기간을 선택해주세요 (필수)</p>
+                </div>
+              </div>
+              <div class="srpv2-step-body">
+                <div class="srpv2-calendar-layout">
+                  <!-- LEFT -->
+                  <div class="srpv2-calendar-info">
+                    <div class="srpv2-floating">
+                      <input
+                        id="srpv2StartDateDisplay"
+                        type="text"
+                        readonly
+                        placeholder=" "
+                      />
+                      <label>시작일</label>
+                    </div>
+                    <div class="srpv2-floating">
+                      <input
+                        id="srpv2EndDateDisplay"
+                        type="text"
+                        readonly
+                        placeholder=" "
+                      />
+                      <label>종료일</label>
+                    </div>
+                    <button type="button" id="srpv2ResetRange">
+                      ↻ 다시 선택하기
+                    </button>
+                    <small id="srpv2DateError" class="srpv2-error"></small>
+                  </div>
+                  <!-- RIGHT -->
+                  <div class="srpv2-calendar-panel">
+                    <div class="srpv2-calendar-nav">
+                      <button type="button" id="srpv2PrevMonth">◀</button>
+                      <h3 id="srpv2MonthLabel"></h3>
+                      <button type="button" id="srpv2NextMonth">▶</button>
+                    </div>
+                    <div
+                      id="srpv2CalendarGrid"
+                      class="srpv2-calendar-grid"
+                    ></div>
+                  </div>
+                </div>
+                <!-- Time Selection -->
+                <div
+                  id="srpv2TimeSelection"
+                  style="
+                    display: none;
+                    margin-top: 20px;
+                    padding: 15px;
+                    background-color: #f9fafb;
+                    border-radius: 8px;
+                    border: 1px solid #e5e7eb;
+                  "
+                >
+                  <h4
+                    style="margin: 0 0 10px 0; font-size: 14px; color: #4b5563"
+                  >
+                    상세 시간 설정 (선택사항)
+                  </h4>
+                  <div style="display: flex; gap: 20px">
+                    <div class="srpv2-field" style="margin-bottom: 0">
+                      <label
+                        style="
+                          font-size: 12px;
+                          color: #6b7280;
+                          display: block;
+                          margin-bottom: 4px;
+                        "
+                        >시작 시간</label
+                      >
+                      <div style="display: flex; gap: 4px">
+                        <select
+                          id="inviteStartAmPm"
+                          style="
+                            padding: 6px;
+                            border-radius: 4px;
+                            border: 1px solid #ccc;
+                            outline: none;
+                            cursor: pointer;
+                            font-size: 13px;
+                          "
+                        >
+                          <option value="AM">오전</option>
+                          <option value="PM">오후</option>
+                        </select>
+                        <select
+                          id="inviteStartHour"
+                          style="
+                            padding: 6px;
+                            border-radius: 4px;
+                            border: 1px solid #ccc;
+                            outline: none;
+                            cursor: pointer;
+                            font-size: 13px;
+                          "
+                        >
+                          <option value="1">1</option>
+                          <option value="2">2</option>
+                          <option value="3">3</option>
+                          <option value="4">4</option>
+                          <option value="5">5</option>
+                          <option value="6">6</option>
+                          <option value="7">7</option>
+                          <option value="8">8</option>
+                          <option value="9" selected>9</option>
+                          <option value="10">10</option>
+                          <option value="11">11</option>
+                          <option value="12">12</option>
+                        </select>
+                        <span
+                          style="
+                            align-self: center;
+                            font-weight: bold;
+                            color: #4b5563;
+                          "
+                          >:</span
+                        >
+                        <select
+                          id="inviteStartMinute"
+                          style="
+                            padding: 6px;
+                            border-radius: 4px;
+                            border: 1px solid #ccc;
+                            outline: none;
+                            cursor: pointer;
+                            font-size: 13px;
+                          "
+                        >
+                          <option value="00">00</option>
+                          <option value="10">10</option>
+                          <option value="20">20</option>
+                          <option value="30">30</option>
+                          <option value="40">40</option>
+                          <option value="50">50</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="srpv2-field" style="margin-bottom: 0">
+                      <label
+                        style="
+                          font-size: 12px;
+                          color: #6b7280;
+                          display: block;
+                          margin-bottom: 4px;
+                        "
+                        >종료 시간</label
+                      >
+                      <div style="display: flex; gap: 4px">
+                        <select
+                          id="inviteEndAmPm"
+                          style="
+                            padding: 6px;
+                            border-radius: 4px;
+                            border: 1px solid #ccc;
+                            outline: none;
+                            cursor: pointer;
+                            font-size: 13px;
+                          "
+                        >
+                          <option value="AM">오전</option>
+                          <option value="PM">오후</option>
+                        </select>
+                        <select
+                          id="inviteEndHour"
+                          style="
+                            padding: 6px;
+                            border-radius: 4px;
+                            border: 1px solid #ccc;
+                            outline: none;
+                            cursor: pointer;
+                            font-size: 13px;
+                          "
+                        >
+                          <option value="1">1</option>
+                          <option value="2">2</option>
+                          <option value="3">3</option>
+                          <option value="4">4</option>
+                          <option value="5">5</option>
+                          <option value="6">6</option>
+                          <option value="7">7</option>
+                          <option value="8">8</option>
+                          <option value="9">9</option>
+                          <option value="10" selected>10</option>
+                          <option value="11">11</option>
+                          <option value="12">12</option>
+                        </select>
+                        <span
+                          style="
+                            align-self: center;
+                            font-weight: bold;
+                            color: #4b5563;
+                          "
+                          >:</span
+                        >
+                        <select
+                          id="inviteEndMinute"
+                          style="
+                            padding: 6px;
+                            border-radius: 4px;
+                            border: 1px solid #ccc;
+                            outline: none;
+                            cursor: pointer;
+                            font-size: 13px;
+                          "
+                        >
+                          <option value="00">00</option>
+                          <option value="10">10</option>
+                          <option value="20">20</option>
+                          <option value="30">30</option>
+                          <option value="40">40</option>
+                          <option value="50">50</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- submit -->
+                <input
+                  id="srpv2StartDateTime"
+                  name="startDate"
+                  type="datetime-local"
+                  class="srpv2-hidden-datetime"
+                />
+                <input
+                  id="srpv2EndDateTime"
+                  name="endDate"
+                  type="datetime-local"
+                  class="srpv2-hidden-datetime"
+                />
+              </div>
+            </section>
+            <!-- STEP 3 -->
+            <section id="srpv2Step3" class="srpv2-step-card srpv2-hidden-step">
+              <div class="srpv2-step-header">
+                <div id="srpv2Step3Status" class="srpv2-step-status">
+                  <svg viewBox="0 0 52 52">
+                    <circle class="srpv2-check-circle" cx="26" cy="26" r="24" />
+                    <path class="srpv2-check-mark" d="M14 27 L22 35 L38 18" />
+                  </svg>
+                </div>
+                <div>
+                  <h2>3단계</h2>
+                  <p>관련 사진을 첨부해주세요 (선택)</p>
+                </div>
+              </div>
+              <div class="srpv2-step-body">
+                <div class="srpv2-upload-layout">
+                  <div class="srpv2-upload-area">
+                    <!-- 썸네일 -->
+                    <div class="srpv2-upload-item">
+                      <label for="srpv2ThumbnailInput" class="srpv2-upload-box">
+                        <span>+</span>
+                        <img id="srpv2ThumbnailPreview" />
+                        <button type="button" class="srpv2-remove-image">
+                          ×
+                        </button>
+                      </label>
+                      <input
+                        id="srpv2ThumbnailInput"
+                        type="file"
+                        accept="image/*"
+                        name="scheduleThumbnailFile"
+                      />
+                    </div>
+                  </div>
+                  <div class="srpv2-action-panel">
+                    <button type="submit" id="srpv2PreviewButton">
+                      일정 등록하기
+                    </button>
+                    <button type="button" id="srpv2ResetButton">
+                      다시 작성하기
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </form>
+        </div>
+      </div>
+    </main>
+    <script th:inline="javascript">
+      window.addEventListener("load", () => {
+        initPage();
+      });
+    </script>
+    <script th:src="@{/js/header.js}"></script>
+    <script th:src="@{/js/plannersTap.js}"></script>
+    <div th:replace="~{layout/footer}"></div>
+    <div th:replace="~{layout/invite_js}"></div>
+  </body>
+</html>

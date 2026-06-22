@@ -1,0 +1,965 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>플래너즈 :: 일정 보기</title>
+    <!-- <link rel="icon" href="/favicon.ico" />-->
+    <div th:replace="~{layout/chat_socket}"></div>
+    <link rel="stylesheet" th:href="@{/css/header.css}" />
+    <link rel="stylesheet" th:href="@{/css/plannersTap.css}" />
+    <link rel="stylesheet" th:href="@{/css/footer.css}" />
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <style>
+        /* ========================= WRAPPER ========================= */
+        .schedule-wrapper {
+            width: 100%;
+        }
+
+        /* ========================= DETAIL PANEL ========================= */
+        .schedule-detail-panel {
+            position: sticky;
+            top: 120px;
+            /* 헤더 높이에 맞게 조정 */
+            z-index: 50;
+            overflow: hidden;
+            margin-bottom: 24px;
+            height: 72px;
+            border-radius: 20px;
+            background: #fff;
+            border: 1px solid rgba(255, 255, 255, .35);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7), 0 8px 24px rgba(0, 0, 0, .06), 0 20px 40px rgba(0, 0, 0, .04);
+            transition: height .25s ease, box-shadow .25s ease, top 0.2s ease;
+        }
+
+        .schedule-detail-panel.active {
+            height: 220px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, .75), 0 14px 32px rgba(0, 0, 0, .10), 0 24px 56px rgba(0, 0, 0, .14);
+        }
+
+        /* ========================= BACKGROUND ========================= */
+        .detail-overlay {
+            position: absolute;
+            inset: 0;
+            background-size: auto;
+            background-position: top;
+            background-repeat: repeat;
+            opacity: 0;
+            transition: opacity .35s ease;
+        }
+
+        .schedule-detail-panel.active .detail-overlay {
+            opacity: 1;
+        }
+
+        .detail-overlay::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(rgba(0, 0, 0, .15), rgba(0, 0, 0, .50));
+        }
+
+        /* ========================= CONTENT ========================= */
+        .detail-content {
+            position: relative;
+            z-index: 2;
+            height: 100%;
+            padding: 18px 24px;
+            display: flex;
+            flex-direction: column;
+            color: #fff;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, .55);
+            transition: opacity .25s ease, transform .25s ease;
+        }
+
+        .detail-content.fading {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 24px;
+        }
+
+        .detail-title-group {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .detail-title-group h2 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 800;
+            line-height: 1;
+            padding: 20px;
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        #detailCreated {
+            font-size: 12px;
+            opacity: .75;
+            margin-bottom: 15px;
+            margin-left: 10px;
+        }
+
+        .detail-period {
+            font-size: 16px;
+            font-weight: 600;
+            opacity: .9;
+            padding-inline: 10px;
+        }
+
+        .detail-body {
+            flex: 1;
+            min-height: 0;
+            margin-top: 16px;
+            display: flex;
+            gap: 24px;
+            padding: 30px 0 0 30px;
+        }
+
+        .detail-owner {
+            width: 240px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            max-width: 20%;
+            overflow-x: hidden;
+            text-overflow: ellipsis;
+            min-height: 64px;
+            margin-top: -30px;
+        }
+
+        .detail-owner-img {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+            border: 2px solid rgba(255, 255, 255, .35);
+        }
+
+        .detail-owner-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .detail-description {
+            flex: 1;
+            max-height: 95px;
+            overflow: auto;
+            line-height: 1.7;
+            font-size: 15px;
+            min-height: 50px;
+            margin-top: -10px;
+        }
+
+        .detail-description::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .detail-description::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .detail-description::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, .35);
+            border-radius: 999px;
+        }
+
+
+
+        /* ========================= FOOTER ========================= */
+        .detail-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        /* ========================= DETAIL PANEL 버튼 ========================= */
+        .schedule-detail-panel .join-btn {
+            width: 120px;
+            height: 40px;
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transition: all .25s ease;
+            box-shadow: .1rem .1rem 0 slategray;
+        }
+
+        .schedule-detail-panel.active .join-btn {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .schedule-detail-panel .join-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .schedule-detail-panel .detail-btn {
+            width: 120px;
+            height: 40px;
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transition: all .25s ease;
+            box-shadow: .1rem .1rem 0 slategray;
+        }
+
+        .schedule-detail-panel.active .detail-btn {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .schedule-detail-panel .detail-btn:hover {
+            background-color: hsl(120, 62%, 35%);
+        }
+
+        .schedule-detail-panel .remove-btn {
+            width: 120px;
+            height: 40px;
+            border: none;
+            border-radius: 10px;
+            background: rgb(247, 24, 24);
+            color: #fff;
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transition: all .25s ease;
+            box-shadow: .1rem .1rem 0 slategray;
+        }
+
+        .schedule-detail-panel.active .remove-btn {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .schedule-detail-panel .remove-btn:hover {
+            background: #ce1e1e;
+        }
+
+        .create-schedule-btn {
+            width: 140px;
+            height: 40px;
+            border: none;
+            border-radius: 10px;
+            background: #fff;
+            color: darkslategray;
+            cursor: pointer;
+            transition: all .25s ease;
+            box-shadow: .1rem .1rem 0 slategray;
+        }
+
+        .create-schedule-btn:hover {
+            filter: invert(1) brightness(1.2);
+        }
+
+        .create-schedule-btn:hover:before {
+            content: "+ ";
+        }
+
+        .join-planners-btn {
+            width: 140px;
+            height: 40px;
+            border: none;
+            border-radius: 10px;
+            background: var(--blue);
+            color: #fff;
+            cursor: pointer;
+            transition: all .25s ease;
+            box-shadow: .1rem .1rem 0 slategray;
+        }
+
+        .join-planners-btn:hover {
+            background: #1d4ed8;
+        }
+
+        /* ========================= LIST ========================= */
+        .schedule-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .schedule-item .action-row {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .schedule-item .join-btn {
+            width: 100px;
+            height: 36px;
+            border: none;
+            border-radius: 8px;
+            background-color: #007bff;
+            /* 파란색 */
+            color: #fff;
+            cursor: pointer;
+            transition: background-color .25s ease;
+        }
+
+        .schedule-item .join-btn:hover {
+            background-color: #0056b3;
+            /* hover 시 더 선명 */
+        }
+
+        .schedule-item .detail-btn {
+            width: 100px;
+            height: 36px;
+            border: none;
+            border-radius: 8px;
+            background-color: lch(64.53% 73.98 143.11);
+            /* 파란색 */
+            color: #fff;
+            cursor: pointer;
+            transition: background-color .25s ease;
+        }
+
+        .schedule-item .detail-btn:hover {
+            background-color: hsl(120, 62%, 35%);
+            /* hover 시 더 선명 */
+        }
+
+        .schedule-item .remove-btn {
+            width: 100px;
+            height: 36px;
+            border: none;
+            border-radius: 8px;
+            background: rgb(247, 24, 24);
+            color: #fff;
+            cursor: pointer;
+            transition: background-color .25s ease, color .25s ease;
+        }
+
+        .schedule-item .remove-btn:hover {
+            background: #ce1e1e;
+        }
+
+        /* ========================= CARD ========================= */
+        .schedule-item {
+            display: flex;
+            gap: 16px;
+            min-height: 130px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border-radius: 18px;
+            background: #f8fafc;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, .04);
+            cursor: pointer;
+            transition: all .25s ease;
+            padding-top: 25px;
+        }
+
+        .schedule-item:hover {
+            transform: translateY(-4px);
+        }
+
+        .schedule-item.selected {
+            background: #fff;
+            border: 2px solid var(--blue);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, .12), 0 14px 32px rgba(0, 0, 0, .12);
+            transform: translateY(-2px);
+        }
+
+        .schedule-thumb {
+            position: relative;
+            width: 28%;
+            min-width: 180px;
+            height: 160px;
+            border-radius: 14px;
+            overflow: hidden;
+            background: #e5e7eb;
+            flex-shrink: 0;
+        }
+
+        .schedule-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .badge-pending,
+        .badge-scheduled,
+        .badge-ended {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .badge-pending {
+            background: var(--blue);
+        }
+
+        .badge-scheduled {
+            background: green;
+        }
+
+        .badge-ended {
+            background: darkgray;
+        }
+
+        .schedule-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-evenly;
+            min-width: 0;
+            padding-inline: 20px;
+        }
+
+        .top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-top: 15px;
+            position: relative;
+            vertical-align: -1px;
+        }
+
+        .top-row .title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #111827;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .top-row .title>span {
+            color: #fff;
+            background: var(--blue);
+            padding-inline: 10px;
+            margin-right: 10px;
+        }
+
+        .owner {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            max-width: 180px;
+            transform: translateY(-10px);
+        }
+
+        .owner-img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+
+        .owner-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .bottom-row {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .info-line {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 15px;
+            color: #4b5563;
+        }
+
+        .bottom-row .info-line:nth-of-type(1)::before {
+            content: "📅";
+        }
+
+        .bottom-row .info-line:nth-of-type(2)::before {
+            content: "👥";
+        }
+
+        .schedule-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 24px rgba(0, 0, 0, .08);
+        }
+
+        .schedule-item.selected {
+            background: #fff;
+            border: 2px solid var(--blue);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, .12), 0 14px 32px rgba(0, 0, 0, .12);
+            transform: translateY(-2px);
+        }
+
+        /* ========================= PAGINATION ========================= */
+        .schedule-pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 18px;
+            margin-top: 32px;
+        }
+
+        .page-btn {
+            width: 38px;
+            height: 38px;
+            border: none;
+            border-radius: 10px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .05);
+            transition: all .2s ease;
+        }
+
+        .page-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(0, 0, 0, .08);
+        }
+
+        .page-info {
+            min-width: 80px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 700;
+            color: #6b7280;
+        }
+
+        .schedule-pagination .material-symbols-outlined {
+            font-size: 22px;
+        }
+
+        /* ========================= INITIAL STATE ========================= */
+        .schedule-detail-panel:not(.active) {
+            background: transparent;
+            box-shadow: none;
+            border: none;
+        }
+
+        .schedule-detail-panel:not(.active) .detail-owner,
+        .schedule-detail-panel:not(.active) #detailCreated,
+        .schedule-detail-panel:not(.active) #detailPeriod {
+            opacity: 0;
+        }
+
+        .schedule-detail-panel:not(.active) .detail-description {
+            display: flex;
+            align-items: center;
+            height: 100%;
+            color: #6b7280;
+            text-shadow: none;
+            min-height: 0;
+        }
+
+        .schedule-detail-panel:not(.active)>[class^=detail] *:not(.detail-footer, [class$="btn"], .btn-default) {
+            display: none;
+        }
+
+        .schedule-detail-panel:not(.active) .detail-footer {
+            margin: 0;
+        }
+
+        /*일정 아무것도 없을 때*/
+        main .scheduleEmpty {
+            height: 500px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            font-size: 1.3rem;
+            margin-top: -96px;
+        }
+
+        main .scheduleEmpty>div {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        main .scheduleEmpty:hover {
+            background: rgb(250, 250, 250);
+        }
+
+        main .scheduleEmpty>p {
+            margin-block: 20px;
+        }
+
+        .join-btn {
+            background-color: #007bff;
+            /* 파란색 */
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .join-btn:hover {
+            background-color: #0056b3;
+            /* hover 시 더 선명 */
+        }
+
+        .detail-btn {
+            background-color: lch(64.53% 73.98 143.11);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .detail-btn:hover {
+            background-color: hsl(120, 62%, 35%);
+            /* hover 시 더 선명 */
+        }
+
+        .remove-btn {
+            background-color: #e0e0e0;
+            /* 옅은 회색 */
+            color: #333;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .remove-btn:hover {
+            background-color: #dc3545;
+            /* hover 시 빨간색 */
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div th:replace="~{layout/header}"></div>
+    <th:block>
+        <main class="detail-main">
+            <div class="detail-shell">
+                <div th:replace="~{layout/plannersTap}"></div>
+                <div class="schedule-wrapper">
+                    <!-- 상세보기 패널 -->
+                    <section id="scheduleDetailPanel" class="schedule-detail-panel">
+                        <div class="detail-overlay"></div>
+                        <div class="detail-content">
+                            <div class="detail-header">
+                                <div class="detail-title-group">
+                                    <h2 id="detailTitle"></h2>
+                                    <span id="detailCreated"></span>
+                                </div>
+                                <div id="detailPeriod" class="detail-period"></div>
+                                <div id="detailStatus" class="detail-period"></div>
+                            </div>
+                            <div class="detail-body">
+                                <div class="detail-owner">
+                                    <img id="detailOwnerImg" class="detail-owner-img" src="" alt="">
+                                    <span id="detailOwnerName" class="detail-owner-name"></span>
+                                </div>
+                                <div id="detailDescription" class="detail-description"></div>
+                            </div>
+                            <div class="detail-footer" sec:authorize="isAuthenticated()"
+                                th:if="${!#lists.isEmpty(scheduleList.dtoList) and isMember}">
+                                <button id="removeBtn" class="remove-btn" th:data-sid="0"
+                                    onclick="removeSchedule(this.dataset.sid)">
+                                    <span class="default-text">삭제하기</span>
+                                </button>
+                                <button id="joinBtn" class="join-btn" th:data-sid="0"
+                                    onclick="participate(this.dataset.sid,detailStatus.textContent)">
+                                    <span class="default-text">상세보기</span>
+                                </button>
+                                <button class="create-schedule-btn"
+                                    th:onclick="|location.href='@{/planners/schedule/invite(tid=${plannersDTO.tid})}'|"><span
+                                        class="btn-default">새 일정 만들기</span>
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+                    <div class="scheduleEmpty detail-card" th:if="${#lists.isEmpty(scheduleList.dtoList)}">
+                        <p>현재 생성된 일정이 없습니다</p>
+                        <div sec:authorize="isAuthenticated()" th:unless="${isMember}"><span>그룹에 가입하고 일정을 함께
+                                만들어요!</span><br>
+                            <button class="join-planners-btn"
+                                th:onclick="|location.href='@{/planners/join(tid=${plannersDTO.tid})}'|"><span
+                                    class="btn-default">가입하기</span><br></button>
+                        </div>
+                        <div sec:authorize="isAuthenticated()" th:if="${isMember}"><span>일정을 만들어 볼까요?</span><br>
+                            <button class="create-schedule-btn"
+                                th:onclick="|location.href='@{/planners/schedule/invite(tid=${plannersDTO.tid})}'|"><span
+                                    class="btn-default">새 일정 만들기</span></button>
+                        </div>
+                        <span sec:authorize="isAnonymous()">로그인 후에 일정을 생성할 수 있습니다</span>
+                    </div>
+                    <!-- 일정 목록 -->
+                    <ul class="schedule-list" th:if="${!#lists.isEmpty(scheduleList.dtoList)}">
+                        <li class="schedule-item" th:each="schedule : ${scheduleList.dtoList}"
+                            th:data-sid="${schedule.sid}">
+                            <div class="schedule-thumb">
+                                <img th:src="${schedule.scheduleThumbnail==' '||schedule.scheduleThumbnail=='/img/thumbnail.png'?'/img/엄준식.jpg':schedule.scheduleThumbnail}"
+                                    alt="">
+                                <span class="badge-pending"
+                                    th:if="${schedule.status == T(com.example.project.entity.ScheduleStatus).PENDING}">일정
+                                    조정중</span>
+                                <span class="badge-scheduled"
+                                    th:if="${schedule.status == T(com.example.project.entity.ScheduleStatus).SCHEDULED}">일정
+                                    조정 완료</span>
+                                <span class="badge-ended"
+                                    th:if="${schedule.status == T(com.example.project.entity.ScheduleStatus).ENDED}">일정
+                                    완료</span>
+                            </div>
+                            <div class="schedule-content">
+                                <div class="top-row">
+                                    <div class="title">
+                                        <span th:if="${schedule.creatorUid == currentUserUid}">내 일정</span>
+                                        [[${schedule.title}]]
+                                    </div>
+                                    <div class="owner">
+                                        <img class="owner-img"
+                                            th:src="${schedule.creatorProfile != null && schedule.creatorProfile != '' ? schedule.creatorProfile : '/img/profile.png'}"
+                                            alt="">
+                                        <span class="owner-name">[[${schedule.creator}]]</span>
+                                    </div>
+                                </div>
+                                <div class="bottom-row">
+                                    <div class="info-line">기간 :
+                                        [[${#temporals.format(schedule.startDate.toLocalDate(),'yyyy.MM.dd')}]] ~
+                                        [[${#temporals.format(schedule.endDate.toLocalDate(),'yyyy.MM.dd')}]]</div>
+                                    <div class="info-line">참가자 [[${schedule.population}]]명 /
+                                        [[${schedule.maxPopulation}]]명</div>
+                                </div>
+                                <div class="action-row">
+                                    <button class="remove-btn"
+                                        th:if="${schedule.userStatus == T(com.example.project.entity.ScheduleRole).CREATOR}"
+                                        th:data-sid="${schedule.sid}"
+                                        th:onclick="|event.stopPropagation(); removeSchedule(${schedule.sid})|">삭제하기</button>
+                                    <button class="detail-btn" th:if="${isMember && schedule.status == T(com.example.project.entity.ScheduleStatus).SCHEDULED}" th:data-sid="${schedule.sid}"
+                                        th:onclick="event.stopPropagation(); participate([[${schedule.sid}]],'[[${schedule.status}]]')"
+                                        th:text="상세보기"></button>
+                                    <button class="join-btn" th:if="${isMember && schedule.status == T(com.example.project.entity.ScheduleStatus).PENDING}" th:data-sid="${schedule.sid}"
+                                        th:onclick="event.stopPropagation(); participate([[${schedule.sid}]],'[[${schedule.status}]]')"
+                                        th:text="참가하기"></button>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                    <!-- 페이지네이션 -->
+                    <div class="schedule-pagination" th:if="${scheduleList.totalPage > 0}">
+                        <!-- 이전 버튼 -->
+                        <a class="page-btn" th:if="${scheduleList.page > 1}"
+                            th:href="@{/planners/schedule( tid=${param.tid}, page=${scheduleList.page - 1} )}"><span
+                                class="material-symbols-outlined">chevron_left</span></a>
+                        <button class="page-btn" th:unless="${scheduleList.page > 1}" disabled><span
+                                class="material-symbols-outlined">chevron_left</span></button>
+                        <!-- 현재페이지 / 전체페이지 -->
+                        <span class="page-info"><span th:text="${#numbers.formatInteger(scheduleList.page,2)}">01</span>
+                            / <span th:text="${#numbers.formatInteger(scheduleList.totalPage,2)}">05</span></span>
+                        <!-- 다음 버튼 -->
+                        <a class="page-btn" th:if="${scheduleList.page < scheduleList.totalPage}"
+                            th:href="@{/planners/schedule( tid=${param.tid}, page=${scheduleList.page + 1} )}"><span
+                                class="material-symbols-outlined">chevron_right</span></a>
+                        <button class="page-btn" th:unless="${scheduleList.page < scheduleList.totalPage}"
+                            disabled><span class="material-symbols-outlined">chevron_right</span></button>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <script th:inline="javascript">
+            const tid = /*[[${tid}]]*/'tid';
+            function formatDate(dateStr, pattern) {
+                const date = new Date(dateStr);
+                const yyyy = date.getFullYear();
+                const yy = String(yyyy).slice(2);
+                const mm = String(date.getMonth() + 1).padStart(2, '0');
+                const dd = String(date.getDate()).padStart(2, '0');
+
+                if (pattern === 'yyyy-MM-dd') {
+                    return `${yyyy}-${mm}-${dd}`;
+                }
+                if (pattern === 'yy.MM.dd') {
+                    return `${yy}.${mm}.${dd}`;
+                }
+                return dateStr;
+            }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                const detailContent = document.querySelector('.detail-content');
+                const detailOverlay = document.querySelector('.detail-overlay');
+                const removeBtn = document.querySelector('.remove-btn')
+                const createBtn = document.querySelector('.create-schedule-btn');
+
+                //비동기로 개별 일정 정보 불러오기 : 겟 요청은 바디를 가질 수 없답니다
+                function loadDetail(sid, tid = parseInt(location.search.split('tid=')[1])) {
+                    fetch(`/planners/schedule/view?sid=${sid}&tid=${tid}`, {
+                        method: 'GET', headers: { 'Content-Type': 'application/json' }
+                    })
+                        .then(res => {
+                            if (!res.ok) {
+                                throw new Error("일정을 불러올 수 없습니다.");
+                            }
+                            return res.json();
+                        })
+                        .then(scheduleDTO => {
+                            renderDetail(scheduleDTO); // 아까 만든 innerHTML 렌더링 함수 호출
+                        })
+                        .catch(err => {
+                            console.error("Error fetching schedule:", err);
+                        });
+                }
+
+                //디테일 html 생성 함수 (매개변수는 비동기 데이타)
+                function renderDetail(responseBody) {
+                    const scheduleDTO = responseBody.schDTO;
+                    scheduleDetailPanel.innerHTML = `
+                        <div class="detail-overlay" style="background-image:url('${scheduleDTO.scheduleThumbnail}')"></div>
+                        <div class="detail-content">
+                        <div class="detail-header">
+                            <div class="detail-title-group">
+                            <h2>${scheduleDTO.title || ''}</h2>
+                            <span>${scheduleDTO.regdate ? `등록일 | ${formatDate(scheduleDTO.regdate, 'yyyy-MM-dd')}` : ''}</span>
+                            </div>
+                            <div class="detail-period">
+                                ${formatDate(scheduleDTO.startDate, 'yy.MM.dd')} ~ ${formatDate(scheduleDTO.endDate, 'yy.MM.dd')}
+                            </div>
+                            <div class="detail-period">${scheduleDTO.status === 'PENDING' ? '일정 조정중' : '일정 조정 완료'}</div>
+                        </div>
+                        <div class="detail-body">
+                            <div class="detail-owner">
+                            <img class="detail-owner-img" src="${scheduleDTO.creatorProfile || ''}" alt="">
+                            <span class="detail-owner-name">${scheduleDTO.creator || ''}</span>
+                            </div>
+                            <div class="detail-description">${scheduleDTO.description || ''}</div>
+                        </div>
+                        `+
+                        (!responseBody.isMember ? `` : (
+                            `
+                        <div class="detail-footer">
+                            ${scheduleDTO.userStatus === 'CREATOR' ? `<button id="removeBtn" class="remove-btn" data-sid="${scheduleDTO.sid}" onclick="removeSchedule(this.dataset.sid)">삭제하기</button>` : ''}
+                            ${scheduleDTO.status === 'PENDING' ? `<button id="joinBtn" class="join-btn" data-sid="${scheduleDTO.sid}" onclick="participate(this.dataset.sid, '${scheduleDTO.status}')">참가하기</button>` : 
+                            `<button id="joinBtn" class="detail-btn" data-sid="${scheduleDTO.sid}" onclick="participate(this.dataset.sid, '${scheduleDTO.status}')">상세보기</button>`}
+                            <button class="create-schedule-btn" onclick="location.href='/planners/schedule/invite?tid=${new URLSearchParams(window.location.search).get('tid')}'">새 일정 만들기</button>
+                        </div>`)) +
+                        `</div>`;
+                }
+
+                document.querySelectorAll('.schedule-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const selected = document.querySelector('.schedule-item.selected');
+                        if (selected === item) {
+                            return;
+                        }
+                        document.querySelectorAll('.schedule-item').forEach(el => {
+                            el.classList.remove('selected');
+                        });
+                        item.classList.add('selected');
+                        detailContent.classList.add('fading');
+                        setTimeout(() => {
+                            //비동기로 디테일 결과 렌더링
+                            loadDetail(item.dataset.sid);
+                            scheduleDetailPanel.classList.add('active');
+                            requestAnimationFrame(() => {
+                                detailContent.classList.remove('fading');
+                            });
+                        }, 150);
+                    });
+                });
+            });
+
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 0) {
+                    scheduleDetailPanel.style.transform = 'translateY(-80px)';
+                } else {
+                    scheduleDetailPanel.style.transform = 'translateY(0)';
+                }
+            });
+
+            //상세보기 함수
+            function participate(sid, status = 'PENDING') {
+                const params = new URLSearchParams(location.search);
+                if (status.includes('PENDING')) {
+                    if (confirm("주의!!!!!!!!!!!!!!!!!!!!!!!!!!\n일정 작업 페이지는 여러 사용자들이 함께 실시간으로 작업하는 공간입니다. 알아서 하십쇼 ㅅㄱ")) {
+                        params.set("sid", sid);
+                        location.href = location.origin + location.pathname + '/editor?tid=' + tid + '&sid=' + sid;
+                    }
+                } else {
+                    // alert("준비중인 기능입니다.")
+                    // return;
+                    location.href = location.origin + location.pathname + '/detail?tid=' + tid + '&sid=' + sid;
+                    // if (confirm("일정에 참가하시겠습니까?")) {
+                    //     fetch(`/planners/schedule/participate/${sid}`)
+                    //         .then(res => {
+                    //             if (!res.ok) {
+                    //                 throw new Error("참여 실패: " + res.status);
+                    //             }
+                    //             return res.json();
+                    //         })
+                    //         .then(data => {
+                    //             alert('일정 참가가 완료되었습니다');
+                    //         })
+                    //         .catch(err => {
+                    //             console.error("에러 발생:", err.message);
+                    //         });
+                    // }
+                }
+            }
+
+
+            // 일정 삭제
+            function removeSchedule(sid) {
+                const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+                const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+                if (confirm("일정을 삭제하시겠습니까?")) {
+                    fetch('/planners/schedule?sid=' + sid, { method: "DELETE", headers: { [csrfHeader]: csrfToken } })
+                        .then(res => {
+                            if (res.status === 200) {
+                                alert("일정이 삭제되었습니다.");
+                                location.reload();
+                                return;
+                            } else if (res.status === 403) {
+                                alert("잘못된 접근입니다.")
+                                location.reload();
+                                return;
+                            }
+                            alert("예기치 못한 오류 발생")
+                        })
+                }
+            }
+        </script>
+    </th:block>
+    <script th:inline="javascript">
+        window.addEventListener("load", () => {
+            initPage();
+        });</script>
+    <script th:src="@{/js/header.js}"></script>
+    <script th:src="@{/js/plannersTap.js}"></script>
+    <div th:replace="~{layout/footer}"></div>
+</body>
+
+</html>

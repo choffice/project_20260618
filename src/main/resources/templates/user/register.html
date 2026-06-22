@@ -1,0 +1,494 @@
+<!doctype html>
+<html
+  lang="ko"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Let's Plan</title>
+    <link rel="stylesheet" th:href="@{/css/header.css}" />
+    <link rel="stylesheet" th:href="@{/css/footer.css}" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          linear-gradient(
+            180deg,
+            rgba(245, 251, 255, 0.62),
+            rgba(232, 246, 255, 0.78) 54%,
+            rgba(255, 255, 255, 0.96)
+          ),
+          url("https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1800&q=80")
+            center 38% / cover fixed;
+        color: #111;
+        font-family:
+          "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI",
+          sans-serif;
+        line-height: 1.5;
+        letter-spacing: 0;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      header {
+        width: 100%;
+      }
+
+      .page-container {
+        display: flex;
+        justify-content: center;
+        min-height: calc(100vh - 76px);
+        padding: 96px 24px 56px;
+      }
+
+      .register-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+        width: min(100%, 430px);
+        padding: 34px;
+        border: 1px solid rgba(255, 255, 255, 0.72);
+        border-radius: 26px;
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+        backdrop-filter: blur(14px);
+      }
+
+      .profile-upload {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .profile-upload h1 {
+        margin: 0 0 10px;
+        color: #10203f;
+        font-size: 20px;
+        font-weight: 800;
+        line-height: 1.2;
+        align-self: flex-start;
+      }
+
+      .profile-preview {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        width: 140px;
+        aspect-ratio: 1 / 1;
+        border: 1px solid rgba(148, 163, 184, 0.82);
+        border-radius: 20px;
+        background: rgba(248, 250, 252, 0.88);
+        cursor: pointer;
+        transition:
+          transform 0.2s,
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+
+      .profile-preview img {
+        width: 52px;
+        height: 52px;
+        object-fit: contain;
+        opacity: 0.72;
+      }
+
+      .file-trigger {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 30px;
+        margin: 10px auto 0;
+        border: 1px solid rgba(148, 163, 184, 0.8);
+        border-radius: 999px;
+        background: #ffffff;
+        cursor: pointer;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+        transition:
+          background 0.2s,
+          border-color 0.2s,
+          transform 0.2s;
+      }
+
+      .file-trigger:hover {
+        transform: translateY(-1px);
+        border-color: #2563eb;
+        background: #eff6ff;
+      }
+
+      .file-trigger svg {
+        width: 17px;
+        height: 17px;
+        stroke: #111;
+        stroke-width: 1.8;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .profile-upload input[type="file"] {
+        display: none;
+      }
+
+      .form-column h2 {
+        margin: 0 0 24px;
+        color: #10203f;
+        font-size: 30px;
+        font-weight: 900;
+        line-height: 1.2;
+        text-align: center;
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+
+      .form-group {
+        margin-bottom: 18px;
+      }
+
+      .form-group label {
+        display: block;
+        margin: 0 0 10px;
+        color: #10203f;
+        font-size: 18px;
+        font-weight: 800;
+        line-height: 1.2;
+      }
+
+      .form-group input {
+        width: 100%;
+        height: 48px;
+        border: 1px solid rgba(148, 163, 184, 0.92);
+        border-radius: 14px;
+        padding: 11px 14px;
+        background: rgba(255, 255, 255, 0.96);
+        color: #0f172a;
+        font: inherit;
+        font-size: 16px;
+        outline: none;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s,
+          background 0.2s;
+      }
+
+      .form-group select {
+        width: 100%;
+        border: 1px solid rgba(148, 163, 184, 0.92);
+        border-radius: 14px;
+        padding: 11px 14px;
+        background: rgba(255, 255, 255, 0.96);
+        color: #0f172a;
+        font: inherit;
+        font-size: 16px;
+        outline: none;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s,
+          background 0.2s;
+        appearance: none;
+        cursor: pointer;
+      }
+
+      .form-group input:focus {
+        border-color: #2563eb;
+        background: #ffffff;
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.13);
+      }
+
+      .required {
+        color: #ff2f2f;
+        font-weight: 800;
+      }
+
+      .register-btn,
+      .secondary-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 48px;
+        border-radius: 14px;
+        font-size: 13px;
+        font-weight: 800;
+        text-decoration: none;
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s,
+          background 0.2s;
+      }
+
+      .register-btn {
+        margin-top: 12px;
+        border: none;
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        color: #fff;
+        cursor: pointer;
+        box-shadow: 0 14px 26px rgba(37, 99, 235, 0.28);
+      }
+
+      .register-btn:hover {
+        transform: translateY(-1px);
+        background: linear-gradient(135deg, #1d4ed8, #1e40af);
+      }
+
+      .secondary-link {
+        margin-top: 12px;
+        border: 1px solid rgba(148, 163, 184, 0.9);
+        background: rgba(255, 255, 255, 0.84);
+        color: #10203f;
+      }
+
+      .secondary-link:hover {
+        transform: translateY(-1px);
+        background: #fff;
+        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+      }
+
+      @media (max-width: 660px) {
+        .register-panel {
+          width: min(100%, 430px);
+          padding: 24px;
+        }
+
+        .form-column h2 {
+          font-size: 28px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div th:replace="~{layout/header :: header}"></div>
+
+    <main class="page-container">
+      <form
+        class="register-panel"
+        id="registerForm"
+        th:action="@{/user/register}"
+        method="post"
+        enctype="multipart/form-data"
+        novalidate
+      >
+        <section class="form-column">
+          <h2>회원가입</h2>
+
+          <aside class="profile-upload">
+            <h1>프로필</h1>
+            <label
+              class="profile-preview"
+              id="profilePreview"
+              for="profileImage"
+            >
+              <img th:src="@{/img/profile.png}" alt="기본 프로필" />
+            </label>
+            <label
+              class="file-trigger"
+              for="profileImage"
+              aria-label="프로필 사진 선택"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 15V4"></path>
+                <path d="M8 8l4-4 4 4"></path>
+                <path d="M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"></path>
+              </svg>
+            </label>
+            <input
+              type="file"
+              id="profileImage"
+              name="profileImage"
+              accept="image/*"
+            />
+          </aside>
+
+          <div class="form-group">
+            <label for="email">이메일 <span class="required">*</span></label>
+            <input type="email" id="email" name="email" required />
+          </div>
+
+          <div class="form-group">
+            <label for="password"
+              >비밀번호 <span class="required">*</span></label
+            >
+            <input type="password" id="password" name="password" required />
+          </div>
+
+          <div class="form-group">
+            <label for="passwordConfirm"
+              >비밀번호 확인 <span class="required">*</span></label
+            >
+            <input
+              type="password"
+              id="passwordConfirm"
+              name="passwordConfirm"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="name">이름 <span class="required">*</span></label>
+            <input type="text" id="name" name="name" required />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="location"
+                >거주 지역 <span class="required">*</span></label
+              >
+              <select id="location" name="location" required>
+                <option value="">지역 선택</option>
+                <option value="서울">서울</option>
+                <option value="부산">부산</option>
+                <option value="제주">제주</option>
+                <option value="인천">인천</option>
+                <option value="대구">대구</option>
+                <option value="평양">평양</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="category"
+                >선호 카테고리 <span class="required">*</span></label
+              >
+              <select id="category" name="category" required>
+                <option value="">카테고리 선택</option>
+                <option value="여행">여행</option>
+                <option value="스터디">스터디</option>
+                <option value="취미">취미</option>
+                <option value="스포츠">스포츠</option>
+                <option value="음식">음식</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" class="register-btn">회원가입</button>
+          <a th:href="@{/user/login}" class="secondary-link">로그인</a>
+        </section>
+      </form>
+    </main>
+
+    <script th:src="@{/js/header.js}"></script>
+    <div th:replace="~{layout/footer}"></div>
+    <script>
+      (function () {
+        const params = new URLSearchParams(window.location.search);
+
+        if (params.has("registerError")) {
+          alert(params.get("registerError"));
+          params.delete("registerError");
+
+          const query = params.toString();
+          const cleanUrl =
+            window.location.pathname + (query ? "?" + query : "");
+          window.history.replaceState({}, "", cleanUrl);
+        }
+
+        document
+          .getElementById("registerForm")
+          .addEventListener("submit", function (e) {
+            const password = document.getElementById("password").value;
+            const passwordConfirm =
+              document.getElementById("passwordConfirm").value;
+
+            if (password !== passwordConfirm) {
+              e.preventDefault();
+              alert("비밀번호를 확인해주세요.");
+              document.getElementById("passwordConfirm").focus();
+              return;
+            }
+
+            const requiredFields = [
+              { id: "email", message: "이메일을 입력해주세요." },
+              { id: "password", message: "비밀번호를 입력해주세요." },
+              { id: "name", message: "이름을 입력해주세요." },
+              { id: "location", message: "거주 지역을 선택해 주세요." },
+              { id: "category", message: "선호 카테고리를 선택해 주세요." },
+            ];
+
+            for (const field of requiredFields) {
+              const input = document.getElementById(field.id);
+
+              if (!input.value.trim()) {
+                e.preventDefault();
+                alert(field.message);
+                input.focus();
+                return;
+              }
+            }
+          });
+
+        document
+          .getElementById("profileImage")
+          .addEventListener("change", function (e) {
+            const file = e.target.files[0];
+
+            if (!file) {
+              return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function (event) {
+              const preview = document.getElementById("profilePreview");
+              preview.style.backgroundImage =
+                "url(" + event.target.result + ")";
+              preview.style.backgroundSize = "cover";
+              preview.style.backgroundPosition = "center";
+              preview.innerHTML = "";
+            };
+            reader.readAsDataURL(file);
+          });
+      })();
+
+      //오창
+      const location1 = document.querySelector("[name=location]");
+
+      email.addEventListener("keyup", function (k) {
+        if (k.key == " ") {
+          let keyval = email.value.trim();
+          if (keyval.charCodeAt() >= 97 && keyval.charCodeAt() <= 122) {
+            email.value = keyval.repeat(3) + "@" + keyval.repeat(3);
+            password.value = keyval.repeat(3);
+            passwordConfirm.value = keyval.repeat(3);
+            location1.value = rand(
+              location1.innerText.split("\n").slice(1, 10),
+            );
+            category.value = rand(category.innerText.split("\n").slice(1, 10));
+          }
+        }
+      });
+
+      //오창
+      document.ondblclick = () => {
+        location1.value = rand(location1.innerText.split("\n").slice(1, 10));
+        category.value = rand(category.innerText.split("\n").slice(1, 10));
+      };
+
+      function rand(max, min = 0, gap = 1, rs = 0) {
+        let tmpmax = [];
+        if (typeof max == "object") {
+          if (max.length == undefined) {
+            for (mkey in max) {
+              tmpmax.push(mkey);
+            }
+          } else tmpmax = max.slice(0, max.length);
+        }
+        typeof max == "object"
+          ? (rs = tmpmax[Math.floor(Math.random() * tmpmax.length)])
+          : (rs =
+              Math.floor(Math.random() * (parseInt(max - min) / gap + 1)) *
+                gap +
+              min);
+        return rs;
+      }
+    </script>
+  </body>
+</html>

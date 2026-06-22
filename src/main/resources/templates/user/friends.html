@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <title>친구 목록</title>
+    <link rel="stylesheet" th:href="@{/css/header.css}" />
+    <link rel="stylesheet" th:href="@{/css/footer.css}" />
+    <link rel="stylesheet" th:href="@{/css/mypage.css}" />
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <style>
+      .request-btn {
+        margin-left: auto;
+      }
+
+      .request-action-btn {
+        height: 38px;
+        border: 1px solid transparent;
+        border-radius: 6px;
+        font-size: 0.92rem;
+        font-weight: 800;
+        cursor: pointer;
+        padding: 0 20px;
+        margin: 0 3px;
+      }
+
+      .request-action-btn.accept {
+        background: #2563eb;
+        color: #ffffff;
+      }
+
+      .request-action-btn.accept:hover {
+        background: #1d4ed8;
+      }
+
+      .request-action-btn.decline {
+        background: #ffffff;
+        border-color: #d1d5db;
+        color: #374151;
+      }
+
+      .request-action-btn.decline:hover {
+        background: #f9fafb;
+        border-color: #9ca3af;
+      }
+
+      .request-action-btn.remove {
+        background: linear-gradient(135deg, #f71616, #f0062d);
+        color: #ffffff;
+      }
+
+      .request-action-btn.remove:hover {
+        background: linear-gradient(135deg, #f0062d, #c51111);
+      }
+    </style>
+  </head>
+  <body>
+    <div th:replace="~{layout/header :: header}"></div>
+    <div class="friend-page-wrap">
+      <h2 class="friend-page-title">친구 목록</h2>
+
+      <div class="page-path">
+        <a th:href="@{/user/mypage}">마이페이지</a>
+        <span>&gt;</span>
+        <a th:href="@{/user/mypage(section='social')}">소셜 관리</a>
+        <span>&gt;</span>
+        <a th:href="@{/friends}">친구 목록</a>
+      </div>
+
+      <div class="friend-summary">
+        <a
+          th:href="@{/friends}"
+          th:classappend="${tab == null || tab == '' ? ' active' : ''}"
+          class="friend-summary-card"
+        >
+          <div class="friend-summary-icon">👥</div>
+          <div>
+            <strong>친구</strong>
+            <p th:text="${friendList.size()}"></p>
+          </div>
+        </a>
+
+        <a
+          th:href="@{/friends(tab='request')}"
+          th:classappend="${tab == 'request' ? ' active' : ''}"
+          class="friend-summary-card"
+        >
+          <div class="friend-summary-icon">👋</div>
+          <div>
+            <strong>친구 요청</strong>
+            <p th:text="${requestList.size()}"></p>
+          </div>
+        </a>
+      </div>
+
+      <form class="friend-search-box" th:action="@{/friends}" method="get">
+        <input type="hidden" name="tab" th:value="${tab}" />
+        <input
+          type="text"
+          name="keyword"
+          th:value="${keyword}"
+          placeholder="사용자 이름을 검색하세요"
+        />
+        <button type="submit">🔍</button>
+      </form>
+
+      <div class="friend-list tab1" style="display: none">
+        <div class="friend-list">
+          <div class="friend-item" th:each="friend : ${friendList}">
+            <img
+              class="friend-profile"
+              th:src="${friend.profileImg != null && !#strings.isEmpty(friend.profileImg)
+                  ? friend.profileImg
+                  : '/img/profile.png'}"
+              alt="프로필 이미지"
+            />
+
+            <div class="friend-info">
+              <div class="friend-name" th:text="${friend.name}">이름</div>
+              <div class="friend-email" th:text="${friend.email}">
+                email@email.com
+              </div>
+            </div>
+            <div class="request-btn">
+              <button
+                type="button"
+                class="request-action-btn remove"
+                th:onclick="|removeFriend(${friend.ffid})|"
+              >
+                삭제
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="friend-list tab2" style="display: none">
+        <div class="friend-list">
+          <div class="friend-item" th:each="friend : ${requestList}">
+            <img
+              class="friend-profile"
+              th:src="${friend.profileImg != null && !#strings.isEmpty(friend.profileImg)
+                  ? friend.profileImg
+                  : '/img/profile.png'}"
+              alt="프로필 이미지"
+            />
+
+            <div class="friend-info">
+              <div class="friend-name" th:text="${friend.name}">이름</div>
+              <div class="friend-email" th:text="${friend.email}">
+                email@email.com
+              </div>
+            </div>
+            <div class="request-btn">
+              <button
+                type="button"
+                class="request-action-btn accept"
+                th:onclick="|acceptRequest(${friend.uid})|"
+              >
+                수락
+              </button>
+              <button
+                type="button"
+                class="request-action-btn decline"
+                th:onclick="|declineRequest(${friend.uid})|"
+              >
+                거절
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script th:inline="javascript">
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get("tab");
+      const tab1 = document.querySelector(".tab1");
+      const tab2 = document.querySelector(".tab2");
+      const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+      const csrfHeader = document.querySelector(
+        'meta[name="_csrf_header"]',
+      ).content;
+
+      if (!tab) {
+        tab1.style.display = "block";
+      } else if (tab === "request") {
+        tab2.style.display = "block";
+      }
+
+      function acceptRequest(uid) {
+        if (confirm("친구요청을 수락하시겠습니까?")) {
+          fetch("/friends/accept?request=" + uid, {
+            method: "POST",
+            headers: { [csrfHeader]: csrfToken },
+          }).then((res) => {
+            if (res.status === 200) {
+              alert("친구요청이 수락되었습니다.");
+              location.reload();
+            } else if (res.status === 400) {
+              alert("존재하지 않는 요청입니다.");
+            } else {
+              alert("예기치 못한 오류 발생");
+            }
+          });
+        }
+      }
+
+      function declineRequest(uid) {
+        if (confirm("친구요청을 거절하시겠습니까?")) {
+          fetch("/friends/decline?request=" + uid, {
+            method: "POST",
+            headers: { [csrfHeader]: csrfToken },
+          }).then((res) => {
+            if (res.status === 200) {
+              alert("친구요청이 거절되었습니다.");
+              location.reload();
+            } else if (res.status === 400) {
+              alert("존재하지 않는 요청입니다.");
+            } else {
+              alert("예기치 못한 오류 발생");
+            }
+          });
+        }
+      }
+
+      function removeFriend(ffid) {
+        if (confirm("친구 목록에서 삭제하시겠습니까?")) {
+          fetch("/friends?ffid=" + ffid, {
+            method: "DELETE",
+            headers: { [csrfHeader]: csrfToken },
+          }).then((res) => {
+            if (res.status === 200) {
+              alert("삭제되었습니다.");
+              location.reload();
+            } else if (res.status === 400) {
+              alert("존재하지 않는 친구입니다.");
+            } else {
+              alert("예기치 못한 오류 발생");
+            }
+          });
+        }
+      }
+    </script>
+
+    <script th:src="@{/js/header.js}"></script>
+    <div th:replace="~{layout/footer}"></div>
+  </body>
+</html>

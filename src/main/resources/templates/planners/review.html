@@ -1,0 +1,412 @@
+<!doctype html>
+<html
+  lang="ko"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <title>플래너즈 :: 리뷰페이지</title>
+    <!-- <link rel="icon" href="/favicon.ico" />-->
+    <link rel="stylesheet" th:href="@{/css/header.css}" />
+    <link rel="stylesheet" th:href="@{/css/plannersTap.css}" />
+    <link rel="stylesheet" th:href="@{/css/footer.css}" />
+    <style>
+      .title {
+        border-bottom: 1px solid var(--border);
+      }
+
+      .review-title {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-top: 0px;
+        width: 100%;
+        text-align: center;
+        height: fit-content;
+      }
+
+      .review-empty {
+        margin: 28px 0 0;
+        padding: 50px 0;
+        text-align: center;
+        color: #94a3b8;
+        font-size: 1rem;
+      }
+
+      .review-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin: 28px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .review-list li {
+        padding: 20px 22px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .review-list strong {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 1.1rem;
+        color: var(--text);
+      }
+
+      .review-list p {
+        margin: 12px 0;
+        line-height: 1.6;
+        color: #495057;
+      }
+
+      .review-list small {
+        display: block;
+        color: #868e96;
+        font-size: 0.9rem;
+      }
+
+      /* 리뷰 수정 */
+      .review-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        margin-top: 16px;
+      }
+
+      .review-action-btn {
+        min-width: 64px;
+        height: 34px;
+        padding: 0 12px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: #fff;
+        color: #495057;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .review-action-btn:hover {
+        background: #f8f9fa;
+      }
+
+      .review-edit-form {
+        width: 100%;
+        display: none;
+        margin-top: 16px;
+        padding: 16px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #f8fafc;
+      }
+
+      .review-edit-form input,
+      .review-edit-form select,
+      .review-edit-form textarea {
+        width: 100%;
+        margin-bottom: 10px;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: #fff;
+        font-size: 0.95rem;
+        box-sizing: border-box;
+      }
+
+      .review-edit-form textarea {
+        min-height: 120px;
+        resize: vertical;
+        line-height: 1.5;
+      }
+
+      .review-edit-buttons {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+
+      .review-rating-edit {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 10px;
+      }
+
+      .rating-star {
+        border: none;
+        background: transparent;
+        color: #f59f00;
+        font-size: 1.6rem;
+        line-height: 1;
+        cursor: pointer;
+        padding: 2px;
+      }
+
+      .rating-star:hover {
+        transform: scale(1.08);
+      }
+
+      .review-save-btn {
+        min-width: 80px;
+        height: 36px;
+        padding: 0 14px;
+        border: none;
+        border-radius: 6px;
+        background: var(--blue);
+        color: #fff;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .review-save-btn:hover {
+        background: #2563eb;
+      }
+
+      .review-cancel-btn {
+        min-width: 64px;
+        height: 36px;
+        padding: 0 14px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: #fff;
+        color: #495057;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .review-cancel-btn:hover {
+        background: #f1f3f5;
+      }
+
+      /* 리뷰 쓰기 */
+      .detail-footer {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 24px;
+      }
+
+      .create-schedule-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 120px;
+        height: 40px;
+        padding: 0 18px;
+        border: none;
+        border-radius: 8px;
+        background: var(--blue);
+        color: #fff !important;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+      .create-schedule-btn:hover {
+        background: #2563eb;
+      }
+    </style>
+    <div th:replace="~{layout/chat_socket}"></div>
+  </head>
+  <body>
+    <div th:replace="~{layout/header}"></div>
+    <th:block>
+      <main class="detail-main">
+        <div class="detail-shell">
+          <div th:replace="~{layout/plannersTap}"></div>
+          <article class="detail-card">
+            <section class="info-section">
+              <div class="title">
+                <h2 class="review-title">플래너 리뷰</h2>
+              </div>
+              <div
+                class="review-empty"
+                th:if="${#lists.isEmpty(reviewList)}"
+                style="text-align: center; color: #94a3b8; padding: 70px 0"
+              >
+                아직 작성된 리뷰가 없습니다. 첫 리뷰를 남겨보세요!
+              </div>
+              <ul class="review-list" th:unless="${#lists.isEmpty(reviewList)}">
+                <li th:each="review : ${reviewList}">
+                  <div>
+                    <strong th:text="${review.title}">리뷰 제목</strong>
+                  </div>
+
+                  <div>
+                    <span
+                      class="rating-star"
+                      th:each="i: ${#numbers.sequence(1, review.rating)}"
+                      >★
+                    </span>
+                  </div>
+
+                  <p th:text="${review.content}">리뷰 내용</p>
+
+                  <small th:text="${review.user.name}">작성자</small>
+                  <small
+                    th:text="${#temporals.format(review.regDate, 'yyyy.MM.dd HH.mm')}"
+                  >
+                    작성 시간
+                  </small>
+
+                  <div
+                    class="review-actions"
+                    th:id="|review-actions-${review.rid}|"
+                    th:if="${#authorization.expression('isAuthenticated()') and #authentication.principal.uid == review.user.uid}"
+                  >
+                    <button
+                      type="button"
+                      class="review-action-btn"
+                      th:onclick="|toggleReviewEdit(${review.rid})|"
+                    >
+                      수정
+                    </button>
+
+                    <button
+                      type="button"
+                      class="review-action-btn"
+                      th:onclick="|deleteReview(${review.rid})|"
+                    >
+                      삭제
+                    </button>
+                  </div>
+
+                  <form
+                    class="review-edit-form"
+                    th:id="|review-edit-form-${review.rid}|"
+                    th:action="@{/planners/reviewModify}"
+                    method="post"
+                  >
+                    <input type="hidden" name="rid" th:value="${review.rid}" />
+                    <input
+                      type="hidden"
+                      name="tid"
+                      th:value="${plannersDTO.tid}"
+                    />
+
+                    <input
+                      type="text"
+                      name="reviewTitle"
+                      th:value="${review.title}"
+                    />
+
+                    <input
+                      type="hidden"
+                      th:id="|rating-input-${review.rid}|"
+                      name="rating"
+                      th:value="${review.rating}"
+                    />
+
+                    <div class="review-rating-edit" th:data-rid="${review.rid}">
+                      <button
+                        type="button"
+                        class="rating-star"
+                        th:each="i : ${#numbers.sequence(1, 5)}"
+                        th:data-rating="${i}"
+                        th:onclick="|setReviewRating(${review.rid}, ${i})|"
+                        th:text="${i <= review.rating ? '★' : '☆'}"
+                      ></button>
+                    </div>
+
+                    <textarea
+                      name="content"
+                      th:text="${review.content}"
+                    ></textarea>
+
+                    <div class="review-edit-buttons">
+                      <button type="submit" class="review-save-btn">
+                        수정 완료
+                      </button>
+                      <button
+                        type="button"
+                        class="review-cancel-btn"
+                        th:onclick="|toggleReviewEdit(${review.rid})|"
+                      >
+                        취소
+                      </button>
+                    </div>
+                  </form>
+                </li>
+              </ul>
+
+              <div class="detail-footer" th:if="${!hasReview}">
+                <a
+                  class="create-schedule-btn"
+                  th:href="@{/planners/reviewForm(tid=${plannersDTO.tid})}"
+                >
+                  <span class="btn-default"> 리뷰 쓰기 </span>
+                </a>
+              </div>
+            </section>
+          </article>
+        </div>
+      </main>
+    </th:block>
+    <script th:inline="javascript">
+      window.addEventListener("load", () => {
+        initPage();
+      });
+
+      function toggleReviewEdit(rid) {
+        const form = document.getElementById(`review-edit-form-${rid}`);
+        const actions = document.getElementById(`review-actions-${rid}`);
+
+        if (!form || !actions) return;
+
+        const isHidden =
+          form.style.display === "" || form.style.display === "none";
+
+        form.style.display = isHidden ? "block" : "none";
+        actions.style.display = isHidden ? "none" : "flex";
+      }
+
+      function setReviewRating(rid, rating) {
+        const input = document.getElementById(`rating-input-${rid}`);
+        const stars = document.querySelectorAll(
+          `.review-rating-edit[data-rid="${rid}"] .rating-star`,
+        );
+
+        if (!input) return;
+
+        input.value = rating;
+
+        stars.forEach((star) => {
+          const starRating = Number(star.dataset.rating);
+          star.textContent = starRating <= rating ? "★" : "☆";
+        });
+      }
+
+      const tid = /*[[${plannersDTO.tid}]]*/ 0;
+      // "삭제" 클릭 시 호출되는 함수
+      function deleteReview(rid) {
+        if (!confirm("정말 삭제하시겠습니까?")) return;
+
+        const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+        const csrfHeader = document.querySelector(
+          'meta[name="_csrf_header"]',
+        ).content;
+
+        fetch(`/planners/review/${rid}`, {
+          method: "DELETE",
+          headers: { [csrfHeader]: csrfToken },
+        })
+          .then((res) => {
+            if (res.ok) {
+              alert("삭제되었습니다.");
+              location.href = `/planners/review?tid=${tid}`;
+            } else {
+              alert("삭제 중 오류가 발생했습니다.");
+            }
+          })
+          .catch(() => {
+            alert("삭제 요청 중 오류가 발생했습니다.");
+          });
+      }
+    </script>
+    <script th:src="@{/js/header.js}"></script>
+    <script th:src="@{/js/plannersTap.js}"></script>
+    <div th:replace="~{layout/footer}"></div>
+  </body>
+</html>

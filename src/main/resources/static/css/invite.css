@@ -1,0 +1,668 @@
+/* ===================================
+   ROOT
+=================================== */
+
+#srpv2-root{
+    width:100%;
+    max-width:1100px;
+    margin:0 auto;
+    padding:24px;
+    box-sizing:border-box;
+    font-family:
+            "Pretendard",
+            "Noto Sans KR",
+            sans-serif;
+}
+
+#srpv2-root *,
+#srpv2-root *::before,
+#srpv2-root *::after{
+    box-sizing:border-box;
+}
+
+/* ===================================
+   PAGE TITLE
+=================================== */
+
+#srpv2-root .srpv2-page-title{
+    margin:0 0 24px;
+    font-size:34px;
+    font-weight:800;
+    letter-spacing:-0.03em;
+    color:#243447;
+}
+
+/* ===================================
+   BACK BUTTON
+=================================== */
+
+#srpv2-root .srpv2-back-button{
+
+    width:56px;
+    height:56px;
+
+    border:none;
+    border-radius:50%;
+
+    cursor:pointer;
+
+    font-size:28px;
+
+    background:#edf4fb;
+
+    color:#5f7f9f;
+
+    transition:.25s ease;
+
+    margin-bottom:20px;
+}
+
+#srpv2-root .srpv2-back-button:hover{
+
+    background:#ffffff;
+
+    color:#2e5f91;
+
+    transform:translateY(-2px);
+
+    box-shadow:
+            0 12px 24px rgba(0,0,0,.08);
+}
+
+/* ===================================
+   STEP CARD
+=================================== */
+
+#srpv2-root .srpv2-step-card{
+
+    background:#ffffff;
+
+    border-radius:20px;
+
+    margin-bottom:22px;
+
+    overflow:hidden;
+
+    box-shadow:
+            0 20px 45px rgba(177,190,206,.16),
+            0 4px 10px rgba(177,190,206,.12);
+
+    transition:
+            transform .25s ease,
+            box-shadow .25s ease;
+}
+
+#srpv2-root .srpv2-step-card:hover{
+
+    transform:translateY(-2px);
+
+    box-shadow:
+            0 28px 60px rgba(177,190,206,.22),
+            0 8px 16px rgba(177,190,206,.14);
+}
+
+/* ===================================
+   HEADER
+=================================== */
+
+#srpv2-root .srpv2-step-header{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:18px;
+
+    padding:28px;
+}
+
+#srpv2-root .srpv2-step-header h2{
+
+    margin:0;
+
+    font-size:24px;
+}
+
+#srpv2-root .srpv2-step-header p{
+
+    margin:6px 0 0;
+
+    color:#95a3b3;
+
+    font-size:14px;
+}
+
+/* ===================================
+   SVG CHECK
+=================================== */
+
+#srpv2-root .srpv2-step-status{
+
+    width:48px;
+    height:48px;
+
+    flex-shrink:0;
+}
+
+#srpv2-root .srpv2-step-status svg{
+
+    width:100%;
+    height:100%;
+}
+
+#srpv2-root .srpv2-check-circle{
+
+    fill:#d6dde5;
+
+    transition:.4s ease;
+}
+
+#srpv2-root .srpv2-check-mark{
+
+    fill:none;
+
+    stroke:#ffffff;
+
+    stroke-width:4;
+
+    stroke-linecap:round;
+
+    stroke-linejoin:round;
+
+    stroke-dasharray:40;
+
+    stroke-dashoffset:40;
+
+    transition:.45s ease;
+}
+
+#srpv2-root .srpv2-complete
+.srpv2-check-circle{
+
+    fill:#22c55e;
+}
+
+#srpv2-root .srpv2-complete
+.srpv2-check-mark{
+
+    stroke-dashoffset:0;
+}
+
+/* ===================================
+   BODY
+=================================== */
+
+#srpv2-root .srpv2-step-body{
+
+    padding:
+            0
+            28px
+            28px;
+}
+
+/* ===================================
+   FIELD
+=================================== */
+
+#srpv2-root .srpv2-field{
+
+    margin-bottom:22px;
+}
+
+#srpv2-root .srpv2-chip{
+
+    display:inline-flex;
+
+    align-items:center;
+    justify-content:center;
+
+    min-width:90px;
+
+    height:34px;
+
+    padding:0 16px;
+
+    border-radius:999px;
+
+    background:#e8f2ff;
+
+    color:#4675a8;
+
+    font-size:13px;
+
+    font-weight:700;
+
+    margin-bottom:10px;
+}
+
+/* ===================================
+   FLOATING
+=================================== */
+
+#srpv2-root .srpv2-floating{
+
+    position:relative;
+}
+
+#srpv2-root .srpv2-floating input,
+#srpv2-root .srpv2-floating textarea{
+
+    width:100%;
+
+    border:1px solid #dce6f0;
+
+    border-radius:14px;
+
+    outline:none;
+
+    background:#ffffff;
+
+    font-size:15px;
+
+    transition:.25s ease;
+
+    padding:
+            24px
+            16px
+            12px;
+
+            margin-bottom: 20px;
+}
+
+#srpv2-root .srpv2-floating textarea{
+
+    min-height:140px;
+
+    resize:vertical;
+}
+
+#srpv2-root .srpv2-floating label{
+
+    position:absolute;
+
+    left:14px;
+    top:18px;
+
+    color:#95a5b7;
+
+    background:#fff;
+
+    padding:0 4px;
+
+    pointer-events:none;
+
+    transition:.18s ease;
+}
+
+#srpv2-root .srpv2-floating input:focus,
+#srpv2-root .srpv2-floating textarea:focus{
+
+    border-color:#6aa6f8;
+
+    box-shadow:
+            0 0 0 4px
+            rgba(59,130,246,.12);
+}
+
+#srpv2-root .srpv2-floating input:not(:placeholder-shown)+label,
+#srpv2-root .srpv2-floating textarea:not(:placeholder-shown)+label,
+#srpv2-root .srpv2-floating input:focus+label,
+#srpv2-root .srpv2-floating textarea:focus+label{
+
+    top:-9px;
+
+    font-size:11px;
+
+    color:#5d87b5;
+}
+
+#srpv2ResetRange{    background: lightgray;
+    color: dimgray;
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: 2px solid #fff;
+    font-size: 18px;
+    margin-block: 20px;
+    display: flex;
+    justify-self: center;}
+
+    #srpv2ResetRange{
+        background:var(--blue);
+        color:#fff;
+    }
+
+.srpv2-hidden-datetime{display:none;}
+
+.srpv2-upload-item{margin-left:20px;}
+
+/* ===================================
+   ERROR
+=================================== */
+
+#srpv2-root .srpv2-error{
+
+    display:block;
+
+    min-height:20px;
+
+    margin-top:8px;
+
+    color:salmon;
+
+    font-size:13px;
+}
+
+/* ===================================
+   CAPACITY
+=================================== */
+
+#srpv2-root .srpv2-capacity-layout{
+
+    display:flex;
+
+    gap:20px;
+
+    align-items:center;
+}
+
+#srpv2-root .srpv2-checkbox-wrap{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    cursor:pointer;
+
+    color:#4f6275;
+}
+
+/* ===================================
+   HIDDEN STEP
+=================================== */
+
+#srpv2-root .srpv2-hidden-step
+.srpv2-step-body{
+
+    max-height:0;
+
+    overflow:hidden;
+
+    opacity:0;
+
+    padding-top:0;
+
+    padding-bottom:0;
+}
+
+#srpv2-root .srpv2-step-card:not(.srpv2-hidden-step)
+.srpv2-step-body{
+
+    max-height:4000px;
+
+    opacity:1;
+
+    transition:
+            max-height .45s ease,
+            opacity .35s ease;
+}
+
+/* ===================================
+   CALENDAR
+=================================== */
+
+#srpv2-root .srpv2-calendar-layout{
+
+    display:grid;
+
+    grid-template-columns:
+        280px
+        1fr;
+
+    gap:30px;
+}
+
+#srpv2-root .srpv2-calendar-panel{
+
+    border:1px solid #e2ebf4;
+
+    border-radius:18px;
+
+    padding:20px;
+}
+
+#srpv2-root .srpv2-calendar-nav{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:20px;
+}
+
+#srpv2-root .srpv2-calendar-nav button{
+
+    width:40px;
+    height:40px;
+
+    border:none;
+
+    border-radius:10px;
+
+    background:#edf4fb;
+
+    cursor:pointer;
+}
+
+#srpv2-root .srpv2-calendar-grid{
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(7,1fr);
+
+    gap:6px;
+}
+
+/* JS에서 사용 */
+
+#srpv2-root .srpv2-day{
+
+    height:48px;
+
+    border-radius:12px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    cursor:pointer;
+
+    transition:.18s ease;
+}
+
+#srpv2-root .srpv2-day:hover{
+
+    background:#eef6ff;
+}
+
+#srpv2-root .srpv2-day-start,
+#srpv2-root .srpv2-day-end{
+
+    background:#3b82f6;
+
+    color:#fff;
+}
+
+#srpv2-root .srpv2-day-range{
+
+    background:#dbeafe;
+}
+
+/* ===================================
+   UPLOAD
+=================================== */
+
+#srpv2-root .srpv2-upload-layout{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    gap:30px;
+}
+
+#srpv2-root .srpv2-upload-area{
+
+    display:flex;
+
+    gap:22px;
+}
+
+#srpv2-root .srpv2-upload-item input{
+
+    display:none;
+}
+
+#srpv2-root .srpv2-upload-box{
+
+    width:180px;
+    height:180px;
+
+    border-radius:20px;
+
+    border:2px dashed #c4d4e4;
+
+    display:flex;
+
+    align-items:center;
+    justify-content:center;
+
+    position:relative;
+
+    cursor:pointer;
+
+    overflow:hidden;
+
+    transition:.25s ease;
+}
+
+#srpv2-root .srpv2-upload-box:hover{
+
+    border-color:#6aa6f8;
+
+    background:#f7fbff;
+}
+
+#srpv2-root .srpv2-upload-box span{
+
+    font-size:46px;
+
+    color:#87a2c0;
+}
+
+#srpv2-root .srpv2-upload-box img{
+
+    position:absolute;
+
+    inset:0;
+
+    width:100%;
+    height:100%;
+
+    object-fit:cover;
+
+    display:none;
+}
+
+#srpv2-root .srpv2-remove-image{
+
+    position:absolute;
+
+    top:8px;
+    right:8px;
+
+    width:28px;
+    height:28px;
+
+    border:none;
+
+    border-radius:50%;
+
+    background:rgba(0,0,0,.6);
+
+    color:#fff;
+
+    display:none;
+
+    cursor:pointer;
+
+    z-index:2;
+}
+
+/* ===================================
+   ACTION
+=================================== */
+
+#srpv2-root .srpv2-action-panel{
+
+    width:250px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:14px;
+}
+
+#srpv2-root .srpv2-action-panel button{
+
+    height:54px;
+
+    border:none;
+
+    border-radius:14px;
+
+    font-size:15px;
+
+    font-weight:700;
+
+    cursor:pointer;
+}
+
+#srpv2PreviewButton{
+
+    background:#3b82f6;
+
+    color:#fff;
+}
+
+#srpv2ResetButton{
+
+    background:#eef3f8;
+}
+
+#srpv2-root .srpv2-day-disabled{
+
+    opacity:.25;
+
+    cursor:not-allowed;
+
+    pointer-events:none;
+}
+
+#srpv2-root .srpv2-week-header{
+
+    text-align:center;
+
+    font-weight:700;
+
+    padding-bottom:10px;
+
+    color:#6b7a89;
+}

@@ -1,0 +1,377 @@
+/* ===================================
+   MODAL OVERLAY
+=================================== */
+
+.srpv2-modal-overlay{
+
+    position:fixed;
+
+    inset:0;
+
+    background:
+            rgba(0,0,0,.5);
+
+    backdrop-filter:
+            blur(4px);
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    padding:24px;
+
+    z-index:99999;
+
+    animation:
+            srpv2FadeIn .2s ease;
+}
+
+/* ===================================
+   MODAL
+=================================== */
+
+.srpv2-modal{
+
+    width:min(1100px,95vw);
+
+    max-height:90vh;
+
+    overflow:auto;
+
+    background:#ffffff;
+
+    border-radius:24px;
+
+    padding:30px;
+
+    box-shadow:
+            0 25px 70px rgba(0,0,0,.18);
+
+    animation:
+            srpv2ModalUp .25s ease;
+}
+
+.srpv2-modal h2{
+
+    margin:0;
+
+    font-size:28px;
+
+    font-weight:800;
+
+    color:#243447;
+}
+
+/* ===================================
+   GRID
+=================================== */
+
+.srpv2-modal-grid{
+
+    display:grid;
+
+    grid-template-columns:
+        1fr
+        320px;
+
+    gap:32px;
+
+    margin-top:24px;
+}
+
+/* ===================================
+   SUMMARY
+=================================== */
+
+.srpv2-modal-grid > div:first-child{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:10px;
+}
+
+.srpv2-modal-grid b{
+
+    color:#40658c;
+}
+
+.srpv2-modal-grid p{
+
+    margin:0;
+
+    line-height:1.6;
+}
+
+/* ===================================
+   IMAGE PREVIEW AREA
+=================================== */
+
+.srpv2-preview-images{
+
+    display:flex;
+
+    gap:16px;
+
+    margin-top:18px;
+}
+
+.srpv2-preview-image{
+
+    width:220px;
+
+    height:140px;
+
+    border-radius:16px;
+
+    object-fit:cover;
+
+    background:#f2f5f9;
+
+    border:1px solid #e3eaf2;
+}
+
+/* ===================================
+   FRIEND
+=================================== */
+
+.srpv2-friend-list{
+
+    border:1px solid #e4ebf4;
+
+    border-radius:18px;
+
+    padding:14px;
+
+    max-height:420px;
+
+    overflow-y:auto;
+
+    background:#fbfdff;
+}
+
+.srpv2-friend-row{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    padding:10px;
+
+    border-radius:12px;
+
+    cursor:pointer;
+
+    transition:.18s ease;
+}
+
+.srpv2-friend-row:hover{
+
+    background:#eef6ff;
+}
+
+.srpv2-friend-row input{
+
+    width:18px;
+    height:18px;
+}
+
+.srpv2-friend-row img{
+
+    width:42px;
+    height:42px;
+
+    border-radius:50%;
+
+    object-fit:cover;
+
+    flex-shrink:0;
+}
+
+.srpv2-friend-row span{
+
+    color:#334155;
+
+    font-size:14px;
+}
+
+/* ===================================
+   BUTTONS
+=================================== */
+
+.srpv2-modal-buttons{
+
+    display:flex;
+
+    justify-content:flex-end;
+
+    gap:12px;
+
+    margin-top:30px;
+}
+
+#srpv2PublicSubmit,
+#srpv2PrivateSubmit,
+#srpv2ModalCancel{
+
+    min-width:160px;
+
+    height:52px;
+
+    border-radius:14px;
+
+    border:none;
+
+    cursor:pointer;
+
+    font-size:15px;
+
+    font-weight:700;
+
+    transition:.2s ease;
+}
+
+#srpv2PublicSubmit{
+
+    background:#3b82f6;
+
+    color:white;
+}
+
+#srpv2PublicSubmit:hover{
+
+    transform:translateY(-2px);
+
+    box-shadow:
+            0 10px 24px
+            rgba(59,130,246,.3);
+}
+
+#srpv2PrivateSubmit{
+
+    background:#6b7280;
+
+    color:white;
+}
+
+#srpv2PrivateSubmit:hover{
+
+    transform:translateY(-2px);
+}
+
+#srpv2ModalCancel{
+
+    background:white;
+
+    color:#475569;
+
+    border:1px solid #dbe3ec;
+}
+
+#srpv2ModalCancel:hover{
+
+    background:#f8fafc;
+}
+
+/* ===================================
+   SCROLLBAR
+=================================== */
+
+.srpv2-modal::-webkit-scrollbar,
+.srpv2-friend-list::-webkit-scrollbar{
+
+    width:8px;
+}
+
+.srpv2-modal::-webkit-scrollbar-thumb,
+.srpv2-friend-list::-webkit-scrollbar-thumb{
+
+    background:#cfd8e3;
+
+    border-radius:999px;
+}
+
+/* ===================================
+   ANIMATION
+=================================== */
+
+@keyframes srpv2FadeIn{
+
+    from{
+        opacity:0;
+    }
+
+    to{
+        opacity:1;
+    }
+}
+
+@keyframes srpv2ModalUp{
+
+    from{
+
+        opacity:0;
+
+        transform:
+                translateY(20px)
+                scale(.98);
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:
+                translateY(0)
+                scale(1);
+    }
+}
+
+.srpv2-preview-images{
+
+    display:flex;
+
+    gap:20px;
+
+    margin-top:20px;
+
+    flex-wrap:wrap;
+}
+
+.srpv2-preview-block{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:8px;
+}
+
+.srpv2-preview-title{
+
+    font-size:12px;
+
+    font-weight:700;
+
+    color:#64748b;
+}
+
+.srpv2-preview-image{
+
+    width:220px;
+
+    height:140px;
+
+    border-radius:16px;
+
+    object-fit:cover;
+
+    border:1px solid #e2e8f0;
+
+    background:#f8fafc;
+}

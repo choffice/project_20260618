@@ -1,0 +1,201 @@
+<!doctype html>
+<html
+  lang="ko"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Let's Plan</title>
+    <link rel="stylesheet" th:href="@{/css/header.css}" />
+    <link rel="stylesheet" th:href="@{/css/footer.css}" />
+    <div th:replace="~{layout/chat_socket}"></div>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+  </head>
+  <body>
+    <div th:replace="~{layout/header :: header}"></div>
+
+    <main class="home-main">
+      <section class="home-hero" aria-label="플래너즈 검색">
+        <div class="hero-inner">
+          <h1>
+            <!-- 취미를 공유하고,<br /> -->
+            <!-- <span>플래너즈</span>와 함께 특별한 순간을 만들어보세요! -->
+            그동안<span> 플래너즈 </span>를 사랑해주셔서 감사합니다! <br /><span
+              >줄낚시</span
+            >
+            는 나가라
+          </h1>
+
+          <form
+            class="planner-search"
+            th:action="@{/planners/list}"
+            method="get"
+          >
+            <div class="search-box">
+              <span class="search-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                  <circle cx="11" cy="11" r="7"></circle>
+                  <path d="m16.5 16.5 4 4"></path>
+                </svg>
+              </span>
+              <input
+                type="search"
+                name="keyword"
+                placeholder="플래너즈 이름, 취미, 키워드로 검색해보세요"
+              />
+              <button type="submit">검색</button>
+            </div>
+
+            <input type="hidden" name="location" id="locationInput" value="" />
+            <input type="hidden" name="category" id="categoryInput" value="" />
+
+            <div class="filter-row" aria-label="검색 필터">
+              <div class="filter-dropdown">
+                <button
+                  type="button"
+                  class="filter-select"
+                  data-dropdown="region"
+                  data-input="locationInput"
+                  aria-expanded="false"
+                  aria-controls="region-menu"
+                >
+                  <span class="filter-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                      <path
+                        d="M12 21s7-5.4 7-12a7 7 0 0 0-14 0c0 6.6 7 12 7 12Z"
+                      ></path>
+                      <circle cx="12" cy="9" r="2.5"></circle>
+                    </svg>
+                  </span>
+                  <span class="filter-label" data-default-label="지역 선택"
+                    >지역 선택</span
+                  >
+                  <span class="chevron" aria-hidden="true"></span>
+                </button>
+                <div class="dropdown-menu" id="region-menu">
+                  <button type="button" class="dropdown-item" data-value="">
+                    전체
+                  </button>
+                  <button type="button" class="dropdown-item" data-value="서울">
+                    서울
+                  </button>
+                  <button type="button" class="dropdown-item" data-value="부산">
+                    부산
+                  </button>
+                  <button type="button" class="dropdown-item" data-value="제주">
+                    제주
+                  </button>
+                  <button type="button" class="dropdown-item" data-value="인천">
+                    인천
+                  </button>
+                  <button type="button" class="dropdown-item" data-value="대구">
+                    대구
+                  </button>
+                  <button type="button" class="dropdown-item" data-value="평양">
+                    평양
+                  </button>
+                </div>
+              </div>
+
+              <div class="filter-dropdown">
+                <button
+                  type="button"
+                  class="filter-select"
+                  data-dropdown="category"
+                  data-input="categoryInput"
+                  aria-expanded="false"
+                  aria-controls="category-menu"
+                >
+                  <span class="filter-icon grid-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                      <rect x="4" y="4" width="6" height="6" rx="1"></rect>
+                      <rect x="14" y="4" width="6" height="6" rx="1"></rect>
+                      <rect x="4" y="14" width="6" height="6" rx="1"></rect>
+                      <rect x="14" y="14" width="6" height="6" rx="1"></rect>
+                    </svg>
+                  </span>
+                  <span class="filter-label" data-default-label="카테고리 선택"
+                    >카테고리 선택</span
+                  >
+                  <span class="chevron" aria-hidden="true"></span>
+                </button>
+                <div class="dropdown-menu" id="category-menu">
+                  <button type="button" class="dropdown-item" data-value="">
+                    전체
+                  </button>
+                  <button type="button" class="dropdown-item" data-value="여행">
+                    여행
+                  </button>
+                  <button
+                    type="button"
+                    class="dropdown-item"
+                    data-value="스터디"
+                  >
+                    스터디
+                  </button>
+                  <button type="button" class="dropdown-item" data-value="취미">
+                    취미
+                  </button>
+                  <button
+                    type="button"
+                    class="dropdown-item"
+                    data-value="스포츠"
+                  >
+                    스포츠
+                  </button>
+                  <button type="button" class="dropdown-item" data-value="음식">
+                    음식
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="planner-section">
+        <div class="section-title-row">
+          <h2><span aria-hidden="true">🔥</span>인기 플래너즈</h2>
+          <a th:href="@{/planners/list?sort=popular}" class="section-more"
+            >더보기 <span aria-hidden="true"></span
+          ></a>
+        </div>
+
+        <div class="planner-grid popular-grid" id="popularPlanners">
+          <!-- 인기 플래너즈 목록 -->
+        </div>
+      </section>
+
+      <section class="planner-section recommended-section">
+        <div class="section-title-row">
+          <h2><span aria-hidden="true">⭐</span>추천 플래너즈</h2>
+          <a
+            sec:authorize="isAuthenticated()"
+            th:href="@{/planners/list?(location=${loginUser.location}, category=${loginUser.category})}"
+            class="section-more"
+            >더보기 <span aria-hidden="true"></span
+          ></a>
+        </div>
+
+        <div class="planner-grid recommend-grid" id="recommendPlanners">
+          <!-- 추천 플래너즈 목록 -->
+        </div>
+      </section>
+    </main>
+
+    <script th:inline="javascript">
+      const isAuthenticated =
+        /*[[${#authorization.expression('isAuthenticated()')}]]*/ "isAuthenticated";
+      const loginurl = /*[[@{/user/login}]]*/ "loginurl";
+      window.addEventListener("load", () => {
+        loadPopularPlanners();
+        loadRecommendedPlanners();
+      });
+    </script>
+
+    <script th:src="@{/js/header.js}"></script>
+    <div th:replace="~{layout/footer}"></div>
+  </body>
+</html>

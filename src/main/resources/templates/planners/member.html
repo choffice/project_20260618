@@ -1,0 +1,616 @@
+<!doctype html>
+<html
+  lang="ko"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <div th:replace="~{layout/chat_socket}"></div>
+    <title>플래너즈 :: 멤버 보기</title>
+    <link rel="stylesheet" th:href="@{/css/header.css}" />
+    <link rel="stylesheet" th:href="@{/css/plannersTap.css}" />
+    <link rel="stylesheet" th:href="@{/css/footer.css}" />
+    <style>
+      .title {
+        border-bottom: 1px solid var(--border);
+      }
+
+      .member-title {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-top: 0px;
+        width: 100%;
+        text-align: center;
+        height: fit-content;
+      }
+
+      .member-list {
+        margin-top: 30px;
+      }
+
+      .guestbook-btn {
+        padding: 10px;
+        margin-top: 10px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        background: #fff;
+        cursor: pointer;
+      }
+
+      /* 프로필 모달 스타일 */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+      .modal-content {
+        background: white;
+        padding: 30px;
+        border-radius: 16px;
+        width: 320px;
+        text-align: center;
+        position: relative;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      }
+      .close-modal {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #64748b;
+      }
+      .close-modal:hover {
+        color: #0f172a;
+      }
+      .modal-profile-img-container {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 15px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 2px solid #e2e8f0;
+      }
+      .modal-profile-img-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      #modal-name {
+        margin: 0 0 5px;
+        font-size: 1.5rem;
+        color: #1e293b;
+      }
+      .modal-text {
+        margin: 0 0 15px;
+        color: #64748b;
+        font-size: 0.9rem;
+      }
+      .modal-details {
+        background: #f8fafc;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        text-align: left;
+        font-size: 0.9rem;
+        color: #334155;
+        line-height: 1.6;
+      }
+      .modal-details p {
+        margin: 0;
+      }
+      .add-friend-btn {
+        background: #3b82f6;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        width: 100%;
+        transition: background 0.2s;
+      }
+      .add-friend-btn:hover {
+        background: #2563eb;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div th:replace="~{layout/header}"></div>
+    <th:block>
+      <main class="detail-main">
+        <div class="detail-shell">
+          <div th:replace="~{layout/plannersTap}"></div>
+          <article class="detail-card">
+            <p th:if="${!isMember}" class="empty-message" style="margin: 32px">
+              플래너즈에 가입된 회원만 확인 가능합니다
+            </p>
+
+            <section
+              class="info-section"
+              th:if="${isMember}"
+              sec:authorize="isAuthenticated()"
+            >
+              <div class="title">
+                <h2 class="member-title">플래너 목록</h2>
+              </div>
+              <ul class="member-list" id="member-list-container">
+                <!-- 멤버 목록 -->
+              </ul>
+
+              <ul
+                class="pagination h-100 justify-content-center align-items-center"
+                id="member-pagination"
+              >
+                <!-- 멤버 목록 페이지 -->
+              </ul>
+
+              <!-- 방명록 영역 -->
+              <div
+                class="guestbook-container"
+                style="
+                  margin-top: 50px;
+                  border-top: 1px solid var(--border);
+                  padding-top: 30px;
+                "
+              >
+                <div
+                  class="title"
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border: none;
+                    padding-bottom: 0;
+                  "
+                >
+                  <h2
+                    class="member-title"
+                    style="margin: 0; font-size: 1.8rem; text-align: left"
+                  >
+                    방명록
+                  </h2>
+                  <button
+                    type="button"
+                    onclick="toggleGuestbookForm()"
+                    class="guestbook-btn"
+                    style="
+                      margin: 0;
+                      background: #f1f5f9;
+                      color: #0f172a;
+                      font-weight: bold;
+                    "
+                  >
+                    방명록 작성 ✎
+                  </button>
+                </div>
+
+                <div
+                  id="guestbook-form"
+                  style="
+                    display: none;
+                    margin-top: 20px;
+                    background: #f8fafc;
+                    padding: 24px;
+                    border-radius: 16px;
+                    border: 1px solid #e2e8f0;
+                  "
+                >
+                  <textarea
+                    id="guestbook-content"
+                    rows="3"
+                    maxlength="500"
+                    style="
+                      width: 100%;
+                      padding: 14px;
+                      border-radius: 12px;
+                      border: 1px solid #cbd5e1;
+                      resize: vertical;
+                      font-size: 15px;
+                      outline: none;
+                    "
+                    placeholder="멤버들에게 인사말이나 방명록을 남겨주세요!(최대 500자)"
+                  ></textarea>
+                  <div style="text-align: right; margin-top: 14px">
+                    <button
+                      type="button"
+                      onclick="submitGuestbook()"
+                      class="guestbook-btn"
+                      style="
+                        background: #2563eb;
+                        color: white;
+                        border: none;
+                        padding: 10px 24px;
+                        font-weight: bold;
+                      "
+                    >
+                      저장하기
+                    </button>
+                  </div>
+                </div>
+
+                <div
+                  id="guestbook-list"
+                  style="
+                    margin-top: 24px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                  "
+                >
+                  <!-- 방명록 목록 렌더링 영역 -->
+                </div>
+
+                <ul
+                  id="guestbook-pagination"
+                  class="pagination h-100 justify-content-center align-items-center"
+                  style="margin-top: 30px"
+                >
+                  <!-- 방명록 페이징 렌더링 영역 -->
+                </ul>
+              </div>
+            </section>
+          </article>
+        </div>
+      </main>
+    </th:block>
+    <script th:inline="javascript">
+      window.addEventListener("load", () => {
+        initPage();
+      });
+
+      const tid = /*[[${ plannersDTO.tid }]]*/ "tid";
+
+      // 현재 접속한 유저의 UID (Spring Security에서 가져옴)
+      const currentUserUid = /*[[${currentUserUid}]]*/ "currentUserUid";
+      const currentUserEmail = /*[[${currentUserEmail}]]*/ "currentUserEmail";
+      const adminEmail = /*[[${plannersDTO.adminEmail}]]*/ "adminEmail";
+
+      // 내 이메일과 플래너 방장 이메일이 같으면 관리자로 인식
+      const isOwner =
+        currentUserEmail && adminEmail && currentUserEmail === adminEmail;
+
+      let currentGuestbookPage = 1;
+      let editGid = null;
+      let currentGuestbookList = []; // 큰따옴표 오류를 막기 위해 현재 페이지의 방명록 데이터를 저장할 배열
+
+      document.addEventListener("DOMContentLoaded", function () {
+        // 페이지가 로드되면 방명록 1페이지를 불러옵니다.
+        loadGuestbook(1);
+      });
+
+      // 방명록 작성 폼 열기/닫기
+      function toggleGuestbookForm() {
+        const form = document.getElementById("guestbook-form");
+        form.style.display = form.style.display === "none" ? "block" : "none";
+        // 폼을 닫을 때 작성/수정 상태 초기화
+        if (form.style.display === "none") {
+          document.getElementById("guestbook-content").value = "";
+          editGid = null;
+        }
+      }
+
+      // 작성 혹은 수정 버튼 눌렀을 때
+      function submitGuestbook() {
+        const content = document.getElementById("guestbook-content").value;
+        if (!content.trim()) {
+          alert("내용을 입력해주세요.");
+          return;
+        }
+
+        const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+        const csrfHeader = document.querySelector(
+          'meta[name="_csrf_header"]',
+        ).content;
+        // editGid가 있으면 수정(PUT), 없으면 신규 작성(POST)
+        const url = editGid
+          ? `/planners/guestbook/${editGid}`
+          : `/planners/guestbook/${tid}`;
+        const method = editGid ? "PUT" : "POST";
+        fetch(url, {
+          method: method,
+          headers: {
+            "Content-Type": "application/json",
+            [csrfHeader]: csrfToken,
+          },
+          body: JSON.stringify({ content: content }),
+        }).then((res) => {
+          if (res.ok) {
+            document.getElementById("guestbook-content").value = "";
+            document.getElementById("guestbook-form").style.display = "none";
+            editGid = null;
+            loadGuestbook(currentGuestbookPage); // 현재 페이지 갱신
+          } else {
+            alert("처리 중 오류가 발생했습니다.");
+          }
+        });
+      }
+      // "수정" 텍스트 클릭 시 입력 폼에 기존 내용을 채워넣는 함수
+      function openEditForm(gid) {
+        // 전역 배열에서 해당 글 번호의 데이터를 찾음
+        const item = currentGuestbookList.find((g) => g.gid === gid);
+        if (item) {
+          document.getElementById("guestbook-form").style.display = "block";
+          document.getElementById("guestbook-content").value = item.content; // 배열에서 내용을 꺼내 안전하게 주입
+          editGid = gid;
+          document.getElementById("guestbook-content").focus();
+        }
+      }
+
+      // "삭제" 텍스트 클릭 시 호출되는 함수
+      function deleteGuestbook(gid) {
+        if (!confirm("정말 삭제하시겠습니까?")) return;
+        const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+        const csrfHeader = document.querySelector(
+          'meta[name="_csrf_header"]',
+        ).content;
+        fetch(`/planners/guestbook/${gid}`, {
+          method: "DELETE",
+          headers: { [csrfHeader]: csrfToken },
+        }).then((res) => {
+          if (res.ok) {
+            alert("삭제되었습니다.");
+            loadGuestbook(1); // 삭제 후 다시 1페이지 로드
+          } else {
+            alert("삭제 중 오류가 발생했습니다.");
+          }
+        });
+      }
+
+      // 데이터 불러오기
+      function loadGuestbook(page) {
+        currentGuestbookPage = page;
+        fetch(`/planners/guestbook/${tid}?page=${page}`)
+          .then((res) => res.json())
+          .then((data) => {
+            renderGuestbookList(data.dtoList);
+            renderGuestbookPagination(data);
+          });
+      }
+
+      // 리스트 그리기
+      function renderGuestbookList(list) {
+        const container = document.getElementById("guestbook-list");
+        if (!container) return;
+        container.innerHTML = "";
+
+        if (!list || list.length === 0) {
+          container.innerHTML =
+            "<p style='text-align:center; color:#94a3b8; padding: 30px 0;'>아직 작성된 방명록이 없습니다. 첫 방명록을 남겨보세요!</p>";
+          return;
+        }
+        // 불러온 리스트를 변수에 저장해둡니다. (수정 시 안전하게 내용을 꺼내오기 위함)
+        currentGuestbookList = list;
+
+        list.forEach((item) => {
+          const div = document.createElement("div");
+          div.className = "member-card";
+          div.style.alignItems = "flex-start";
+          div.style.padding = "20px";
+
+          let actionButtons = "";
+
+          // 본인일 경우 수정/삭제 모두 노출
+          if (item.writerUid === currentUserUid) {
+            actionButtons = `
+                <button type="button" onclick="openEditForm(${item.gid})" style="background:none; border:none; color:#3b82f6; cursor:pointer; font-size:0.85rem; padding:0 4px;">수정</button>
+                <button type="button" onclick="deleteGuestbook(${item.gid})" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:0.85rem; padding:0 4px;">삭제</button>
+              `;
+          }
+          // 본인은 아니지만 관리자일 경우 삭제만 노출
+          else if (isOwner) {
+            actionButtons = `
+                <button type="button" onclick="deleteGuestbook(${item.gid})" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:0.85rem; padding:0 4px;">삭제</button>
+              `;
+          }
+          const profileImg = item.writerProfileImg
+            ? item.writerProfileImg
+            : "/img/profile.png";
+
+          div.innerHTML = `
+            <img class="member-avatar" src="${profileImg}" alt="프로필" style="width:48px; height:48px;" />
+            <div class="member-info" style="flex:1; margin-left:14px; min-width: 0;">
+              <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                <span class="name" style="font-size:1.1rem;">${item.writerName}</span>
+                <div>
+                  <span class="date" style="font-size:0.85rem; color:#94a3b8; margin-right:8px;">${item.regDate}</span>
+                  ${actionButtons}
+                </div>
+              </div>
+              <!-- word-break: break-word를 통해 텍스트 자동 줄바꿈 강제 -->
+              <p class="content" style="margin:0; white-space:pre-wrap; word-break:break-word; line-height:1.5; color:#334155; font-size:0.95rem;"></p>
+            </div>
+          `;
+          div.querySelector(".content").textContent = item.content;
+          container.appendChild(div);
+        });
+      }
+
+      // 방명록 페이징 버튼 HTML 그리기
+      function renderGuestbookPagination(pageResult) {
+        const pagination = document.getElementById("guestbook-pagination");
+        if (!pagination) return;
+        pagination.innerHTML = "";
+        if (!pageResult || pageResult.totalPage === 0) return;
+
+        // if (pageResult.prev) {
+        //   pagination.innerHTML += `<li><a href="javascript:loadGuestbook(${pageResult.start - 1})" class="page-link">이전</a></li>`;
+        // }
+
+        pageResult.pageList.forEach((pageNum) => {
+          const activeClass = pageNum === pageResult.page ? "active" : "";
+          pagination.innerHTML += `<li><a href="javascript:loadGuestbook(${pageNum})" class="page-link ${activeClass}">${pageNum}</a></li>`;
+        });
+
+        // if (pageResult.next) {
+        //   pagination.innerHTML += `<li><a href="javascript:loadGuestbook(${pageResult.end + 1})" class="page-link">다음</a></li>`;
+        // }
+      }
+
+      // 기존 DOMContentLoaded 이벤트 안에 멤버 리스트 로드 함수도 추가
+      document.addEventListener("DOMContentLoaded", function () {
+        loadGuestbook(1);
+        loadMembers(1); // 멤버 리스트 1페이지 로드
+      });
+
+      // 1. 서버에 멤버 데이터 요청
+      function loadMembers(page) {
+        fetch(`/planners/api/members/${tid}?page=${page}`)
+          .then((res) => res.json())
+          .then((data) => {
+            // data.members 안에 페이징 객체가 들어있음
+            renderMemberList(data.members.content);
+            renderMemberPagination(data.members);
+          });
+      }
+      // 2. 멤버 리스트 그리기
+      let currentMemberList = [];
+      function renderMemberList(list) {
+        const container = document.getElementById("member-list-container"); // 또는 member-list
+        if (!container) return;
+        container.innerHTML = "";
+        if (!list || list.length === 0) {
+          container.innerHTML =
+            '<p class="empty-message" style="margin: 32px">현재 가입한 회원이 없습니다.</p>';
+          return;
+        }
+
+        // 리스트를 전역 변수에 저장 (모달에서 쉽게 찾기 위해)
+        currentMemberList = list;
+        list.forEach((member) => {
+          const profileImg = member.profileImg
+            ? member.profileImg
+            : "/img/profile.png";
+          container.innerHTML += `
+      <li class="member-card">
+        <!-- 클릭 이벤트를 추가하고 마우스 커서를 포인터로 변경 -->
+        <img class="member-avatar" src="${profileImg}" alt="멤버 프로필" 
+             style="cursor: pointer;" onclick="openProfileModal('${member.uid}')" />
+        <div class="member-info" style="cursor: pointer;" onclick="openProfileModal('${member.uid}')">
+          <span class="name">${member.name}</span>
+          <span class="email">${member.email}</span>
+        </div>
+        <button class="add-friend" data-uid="${member.uid}" data-name="${member.name}" onclick="addFriend(this)">
+          친구 추가 +
+        </button>
+      </li>
+    `;
+        });
+      }
+      // 3. 멤버 페이징 그리기
+      function renderMemberPagination(pageResult) {
+        const pagination = document.getElementById("member-pagination");
+        if (!pagination) return;
+        pagination.innerHTML = "";
+        if (!pageResult || pageResult.totalPages === 0) return;
+        // 이전 버튼
+        // if (!pageResult.first) {
+        //   pagination.innerHTML += `<li><a href="javascript:loadMembers(${pageResult.number})" class="page-link">이전</a></li>`;
+        // }
+        // 페이지 번호
+        for (let i = 1; i <= pageResult.totalPages; i++) {
+          const activeClass = pageResult.number + 1 === i ? "active" : "";
+          pagination.innerHTML += `<li><a href="javascript:loadMembers(${i})" class="page-link ${activeClass}">${i}</a></li>`;
+        }
+        // 다음 버튼
+        // if (!pageResult.last) {
+        //   pagination.innerHTML += `<li><a href="javascript:loadMembers(${pageResult.number + 2})" class="page-link">다음</a></li>`;
+        // }
+      }
+
+      // 프로필 모달 열기
+      function openProfileModal(uid) {
+        // 전역 리스트에서 해당 멤버 데이터 찾기
+        const member = currentMemberList.find(
+          (m) => String(m.uid) === String(uid),
+        );
+        if (!member) return;
+
+        const profileImg = member.profileImg
+          ? member.profileImg
+          : "/img/profile.png";
+
+        // 주의: 백엔드 API에서 넘어오는 데이터 필드명에 맞게 수정하세요. (예: member.address, member.category)
+        const location = member.location || "정보 없음";
+        const category = member.category || "정보 없음";
+        // 모달에 내용 채우기
+        document.getElementById("modal-profile-img").src = profileImg;
+        document.getElementById("modal-name").textContent = member.name;
+        document.getElementById("modal-email").textContent = member.email;
+        document.getElementById("modal-location").textContent = location;
+        document.getElementById("modal-category").textContent = category;
+
+        // 모달 안의 친구 추가 버튼 설정
+        const addBtn = document.getElementById("modal-add-friend-btn");
+        addBtn.setAttribute("data-uid", member.uid);
+        addBtn.setAttribute("data-name", member.name);
+        addBtn.onclick = function () {
+          addFriend(this);
+          closeProfileModal(); // 친구 추가 클릭 후 모달 자동으로 닫힘
+        };
+        // 모달 화면에 띄우기
+        document.getElementById("member-profile-modal").style.display = "flex";
+      }
+      // 프로필 모달 닫기
+      function closeProfileModal() {
+        document.getElementById("member-profile-modal").style.display = "none";
+      }
+      // 모달 바깥 어두운 배경 영역 클릭 시 닫기
+      window.onclick = function (event) {
+        const modal = document.getElementById("member-profile-modal");
+        if (event.target === modal) {
+          closeProfileModal();
+        }
+      };
+    </script>
+    <script th:src="@{/js/header.js}"></script>
+    <script th:src="@{/js/plannersTap.js}"></script>
+    <div th:replace="~{layout/footer}"></div>
+
+    <!-- 멤버 프로필 모달 -->
+    <div id="member-profile-modal" class="modal-overlay" style="display: none">
+      <div class="modal-content">
+        <button class="close-modal" onclick="closeProfileModal()">
+          &times;
+        </button>
+        <div class="modal-profile-img-container">
+          <img
+            id="modal-profile-img"
+            src="/img/profile.png"
+            alt="프로필 이미지"
+          />
+        </div>
+        <h3 id="modal-name">이름</h3>
+        <p id="modal-email" class="modal-text">이메일</p>
+
+        <div class="modal-details">
+          <p>
+            <strong>거주지역 : </strong>
+            <span id="modal-location">정보 없음</span>
+          </p>
+          <p>
+            <strong>선호 카테고리 : </strong>
+            <span id="modal-category">정보 없음</span>
+          </p>
+        </div>
+
+        <button id="modal-add-friend-btn" class="add-friend-btn">
+          친구 추가 +
+        </button>
+      </div>
+    </div>
+  </body>
+</html>
