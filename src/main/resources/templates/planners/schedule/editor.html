@@ -425,10 +425,7 @@
                 style="flex: 1; display: flex; flex-direction: column; gap: 16px; max-height: calc(100vh - 120px);">
                 <div class="column activity-block-list" data-zone="activity"
                   style="flex: 2; overflow-y: auto; min-height: 0; margin-bottom: 0;">
-                  <h3>활동 블럭 목록</h3>                  
-                  <button id="blockPlusBtn"
-                      style="cursor:pointer; font-size:16px;">+</button>
-                  
+                  <h3>활동 블럭 목록</h3>
                 </div>
                 <div class="chat-area" style="flex: 3.5; overflow-y: hidden; min-height: 0;">
                   <h3 style="margin: 0 0 12px; font-size: 16px;">채팅</h3>
@@ -1117,7 +1114,8 @@
         .then((res) => res.json())
         .then((data) => {
           const activityList = document.querySelector(".activity-block-list");
-          let str = "<h3>활동 블럭 목록</h3>";
+          let str = "<h3>활동 블럭 목록</h3><button id=\"blockPlusBtn\"\n" +
+              " style=\"cursor:pointer; font-size:16px;\">+</button>";
 
           if (data.length === 0) {
             str =

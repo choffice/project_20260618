@@ -1254,6 +1254,7 @@
 <script th:src="@{/js/chat_img_data.js}"></script>
 <script th:src="@{/js/chat_filter_data.js}"></script>
 <script th:src="@{/js/chatwithme.js}"></script>
+<script th:src="@{/js/codingAlone.js}"></script>
 <div th:replace="~{widjet/nomorejoin}"></div>
 <script class="chat_script" th:inline="javascript">
   const contentInput = document.getElementById("content");
@@ -1610,6 +1611,7 @@
     }
   }
 
+  let chatbot;
   contentInput.addEventListener("focus", () => {
     //그리고 이때 모든 유저가 자신의 채팅 참여 상태를 전송 : 새로고침 유저 동기화
     stompStatus(1, 0);
@@ -1618,12 +1620,46 @@
       : (contentInput.placeholder = "클린한 채팅 문화를 준수합시다");
     chatMessages.classList.remove("off");
     chat_alarm.classList.remove("alarm");
+    if(!chatArea.classList.contains('close')) botChat(); else clearInterval(chatbot);
   });
+
+  let randid = String.fromCharCode(rand(98,122));
+  randid = randid.repeat(3)+'@'+randid.repeat(3);
+  const developers = ['관리자'];
+
+  function botChat(){
+    chatbot = setInterval(()=>{
+      if(chatMessages.childElementCount>0){
+        let target_msg = chatMessages.lastElementChild;
+        pblid = String.fromCharCode(rand(98,122));
+        pblid = pblid.repeat(3)+'@'+pblid.repeat(3);
+        switch(target_msg.classList[0]) {
+          case 'msg':
+            let prespeak = target_msg.title.split('님의 메시지')[0];
+            if (developers.includes(prespeak)) {
+              if(target_msg.innerText.includes('날씨')) sendOnly(rand(['오왕 신기하다','진짜 날씨 이렇대요?','내가 딱 좋아하는 날씨 ㅇㅇ','오늘 날씨보니까 '+rand('치킨/국밥/파전'.split('/'))+'각인데 ㄱㄱ?','날씨 너무 힘들다 진심']),pblid);
+              else if(target_msg.innerHTML.includes('img')) sendOnly('/'+target_msg.innerHTML.split('<img')[0].trim(),pblid);
+              else sendOnly(rand(5) > 2 ? bot.reply().replace('br',''):bot.reply(target_msg.querySelector('span').innerHTML.split('<sub>')[0]).replace('br',''),randid);
+            }
+            break;
+          case 'notice': if(target_msg.innerText.endsWith('신고되었습니다'))
+            sendOnly(rand(['와~ㅋㅋ결국 신고당함', '도대체 누구야 신고 ㅋㅋㅋ', '어차피 새로고침하면 풀리잖음?', '언론탄압 있는 듯 ㄷㄷ 무섭',
+              '아니 신고 진짜...', '다들 조심해! 신고 당할라..', '엥 뭣 땜시 신고야', '...;; 바로 신고해버리죠..']),pblid);
+            break;
+          case 'warn':
+            if (target_msg.innerText.includes('박찬호')) sendOnly(rand(['3줄 요약좀; ;;','뭔일이래..','작가님 여기 소설올리는 곳 아닙니다~','아니 채팅 혼자쓰세요?','(대충 ㄹㅇ ㅋㅋ)','말 길게 하는 게 gpt랑 똑같네;','숨쉬면서 말해']),pblid);
+            else if (target_msg.innerText.includes('비속어')) sendOnly(rand(['필터 고장 안 난듯 휴~','대체 뭘 치신 거예요;;--','입만 열면 욕 ㄷㄷ','패드립 아니죠??','...? 욕을..','비속어 신고 각','헉스 실망임']),pblid);
+            break;
+        }}
+      if(banCtrl.isban(fixname.innerText)&&rand(3)==0) {sendOnly('/free '+fixname,randid);sendOnly('/to '+fixname+' 내가 풀었어 ㅎㅎ',randid);}
+    },5000);
+  }
 
   contentInput.addEventListener("blur", () => {
     stompStatus(2, 0);
     contentInput.placeholder = "Enter로 활성화";
     chatMessages.classList.add("off");
+    if(chatArea.classList.contains('close')) botChat(); else clearInterval(chatbot);
   });
 
   let chatHide; //타임아웃
